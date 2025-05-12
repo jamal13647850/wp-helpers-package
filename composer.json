@@ -1,0 +1,39 @@
+{
+    "name": "jamal13647850/wp-helpers",
+    "description": "مجموعه‌ای از کلاس‌های کمکی و ابزارها برای توسعه قالب‌ها و پلاگین‌های وردپرس.",
+    "type": "library",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Sayyed Jamal Ghasemi",
+            "email": "jamal13647850@gmail.com" 
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=7.4",
+        "twig/twig": "^3.0",
+        "jamal13647850/sms-api": "^2.4"
+    },
+    "autoload": {
+
+        "psr-4": {
+
+            "jamal13647850\\wphelpers\\": "src/" 
+
+        }
+
+    },
+    "config": {
+        "platform": {
+            "php": "7.4"
+        }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/jamal13647850/smsapi" 
+        }
+    ]
+}
