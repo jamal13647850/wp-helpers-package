@@ -47,10 +47,10 @@ class View
     {
         // Initialize view paths from config
         $this->paths = [
-            '@views' => Config::get('view.paths.views', dirname(__DIR__) . '/views'),
-            '@templates' => Config::get('view.paths.templates', get_template_directory()),
-            '@partials' => Config::get('view.paths.partials', get_template_directory() . '/partials'),
-            '@components' => Config::get('view.paths.components', get_template_directory() . '/components'),
+            '@views' => Config::get('view.paths.views', get_template_directory() . '/templates/views'),
+            '@templates' => Config::get('view.paths.templates', get_template_directory() . '/templates'),
+            '@partials' => Config::get('view.paths.partials', get_template_directory() . '/templates/views/partials'),
+            '@components' => Config::get('view.paths.components', get_template_directory() . '/templates/views/components'),
         ];
         
         // Add custom paths from config
