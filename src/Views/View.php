@@ -47,14 +47,11 @@ class View
     {
         // Initialize view paths from config
         $this->paths = [
-            '@views' => Config::get('view.paths.views', get_template_directory() . '/templates/views'),
-            '@templates' => Config::get('view.paths.templates', get_template_directory() . '/templates'),
-            '@partials' => Config::get('view.paths.partials', get_template_directory() . '/templates/views/partials'),
-            '@components' => Config::get('view.paths.components', get_template_directory() . '/templates/views/components'),
+            '@views' => Config::get('views.path', get_template_directory() . '/templates/views'),
         ];
         
         // Add custom paths from config
-        $custom_paths = Config::get('view.paths.custom', []);
+        $custom_paths = Config::get('views.paths.custom', []);
         foreach ($custom_paths as $namespace => $path) {
             $this->paths[$namespace] = $path;
         }
@@ -93,13 +90,13 @@ class View
             }
             
             // Create Twig environment
-            $debug = Config::get('view.debug', WP_DEBUG);
-            $cache = Config::get('view.cache.enabled', false) ? Config::get('view.cache.path', WP_CONTENT_DIR . '/cache/twig') : false;
+            $debug = Config::get('twig.debug', WP_DEBUG);
+            $cache = Config::get('twig.cache.enabled', false) ? Config::get('twig.cache.path', WP_CONTENT_DIR . '/cache/twig') : false;
             
             $options = [
                 'debug' => $debug,
                 'cache' => $cache,
-                'auto_reload' => Config::get('view.auto_reload', true),
+                'auto_reload' => Config::get('twig.auto_reload', true),
                 'strict_variables' => Config::get('view.strict_variables', false),
             ];
             

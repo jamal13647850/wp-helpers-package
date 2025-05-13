@@ -34,11 +34,17 @@ class Config
     {
         // Set default configuration values
         self::$config = [
-            'views' => [
-                'path' => get_template_directory() . '/templates/views',
-                'directories' => ['views'],
-                'cache' => get_template_directory() . '/templates/cache',
+            'twig' => [
+                'paths' =>[
+                    'views' => get_template_directory() . '/templates',
+                ],
+                'cache'=>[
+                    'enabled'=> defined('WP_ENV') && (WP_ENV==="development") ? false:true,
+                    'path'=> WP_CONTENT_DIR . '/cache/twig',
+                ],
                 'debug' => defined('WP_DEBUG') ? WP_DEBUG : false,
+                'auto_reload' => defined('WP_DEBUG') && (WP_DEBUG) ? true:false,
+                'strict_variables' => (defined('WP_ENV') && (WP_ENV==="development"))  ? true:false,
             ],
             'captcha' => [
                 'enabled' => true,
@@ -53,7 +59,7 @@ class Config
                         'from_number' => defined('FARAZSMS_FROM_NUMBER') ? FARAZSMS_FROM_NUMBER : '',
                         'url'         => defined('FARAZSMS_URL') ? FARAZSMS_URL : '',
                         'patterns'    => [
-                            defined('FARAZSMS_PATTERN') ? FARAZSMS_PATTERN : '',
+                            'login'   => defined('FARAZSMS_PATTERN') ? FARAZSMS_PATTERN : '',
                         ],
                     ],
                     // نمونه برای افزودن Provider دیگر:
