@@ -339,35 +339,62 @@ class Theme_Settings_ACF
     }
 
     /**
-     * Get an option value from the theme settings, considering caching.
+     * Get an option value from the theme settings, or all group values as an array.
      *
-     * @param string $field Field name without prefix
-     * @param string $group Group key; default 'general'
-     *
-     * @return mixed|null Field value or null on failure
+     * @param string|null $field   Field name without prefix, or null/empty to fetch all group fields
+     * @param string      $group   Group key; default 'general'
+     * @return mixed|null  Single field value, group array, or null on failure
      */
-    public function getOption(string $field, string $group = 'general')
+    public function getOption($field = null, string $group = 'general')
     {
         try {
             $this->load_config();
             $prefix = $this->theme_prefix . ($this->prefixes[$group] ?? "{$group}_");
+
+            // If $field is empty or null, return all group fields as associative array
+            if (empty($field)) {
+                // Try to get the cached group
+                $cache_key = $group;
+                $cached = $this->cache ? $this->cache->get($cache_key) : false;
+                if ($cached !== false) {
+                    return $cached;
+                }
+
+                // If group definition exists, fetch all valid fields
+                $result = [];
+                if (!empty($this->groups[$group]['fields'])) {
+                    foreach ($this->groups[$group]['fields'] as $f) {
+                        if (isset($f['name']) && $f['type'] !== 'tab') {
+                            $fname = $prefix . $f['name'];
+                            // Fetch from options (support ACF stub or fallback)
+                            $result[$fname] = function_exists('get_field')
+                                ? get_field($fname, 'option')
+                                : null;
+                        }
+                    }
+                    // Cache result for group
+                    if ($this->cache) {
+                        $this->cache->set($cache_key, $result, 3600);
+                    }
+                }
+                return $result;
+            }
+
+            // Default single field mode
             $field_name = $prefix . $field;
 
-            // Attempt to retrieve from cache
             $cache_key = $group;
             $cached = $this->cache ? $this->cache->get($cache_key) : false;
-
             if ($cached !== false && isset($cached[$field_name])) {
                 return $cached[$field_name];
             }
 
-            // Retrieve original value from DB (options)
+            // Retrieve original value from DB
             $value = function_exists('get_field') ? get_field($field_name, 'option') : null;
 
             // Populate cache for the group if empty cache and group fields loaded
             if ($this->cache && $cached === false && !empty($this->groups[$group]['fields'])) {
                 $all = [];
-
                 foreach ($this->groups[$group]['fields'] as $f) {
                     if (isset($f['name']) && $f['type'] !== 'tab') {
                         $all_prefix_name = $prefix . $f['name'];
@@ -376,9 +403,7 @@ class Theme_Settings_ACF
                             : null;
                     }
                 }
-
                 $this->cache->set($cache_key, $all, 3600); // Cache for 1 hour
-
                 if (isset($all[$field_name])) {
                     return $all[$field_name];
                 }
