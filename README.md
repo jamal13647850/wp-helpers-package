@@ -512,6 +512,145 @@ src/
 3. **سازگاری با PHP**: نیاز به PHP 7.4 یا بالاتر دارد.
 4. **عملکرد کش**: در صورت استفاده نادرست از سیستم کش، ممکن است عملکرد سایت کاهش یابد.
 
+## 7. سیستم تنظیمات قالب با ACF (Theme Settings ACF)
+
+### معرفی
+این کلاس امکان تعریف و نمایش صفحات تنظیمات قالب و زیرمنوهای آن را به آسانی و بر اساس یک فایل config مرکزی برای شما فراهم می‌کند. قابلیت ویژه نسخه جدید:
+- بارگذاری و مدیریت منعطف و داینامیک فیلدها از طریق فایل config (بدون نیاز به تغییر کد)
+- تعریف سطح دسترسی برای هر صفحه یا حتی هر فیلد به سادگی در config
+- سازگار با نصب مستقیم در قالب یا به عنوان پکیج کامپوزری (Composer Package)
+- سازگاری با وردپرس فارسی (یا انگلیسی) و معماری استاندارد namespace
+
+### ساختار و راه‌اندازی
+
+#### **نصب**
+- اگر پروژه شما کامپوزری است:
+    ```
+    composer require jamal13647850/wphelpers
+    ```
+- یا افزودن دستی پوشه به پروژه و لود کردن آن از طریق autoload یا require
+
+#### **نمونه راه‌اندازی در قالب:**
+```php
+// در functions.php یا پلاگین وردپرسی
+add_action('after_setup_theme', function() {
+    $settings = new \jamal13647850\wphelpers\Utilities\Theme_Settings_ACF();
+    // اگر می‌خواهید config خارج از قالب باشد:
+    $settings->setConfigPath(get_stylesheet_directory().'/my-config/theme_settings_definitions.php');
+});
+```
+
+#### **ساختار فایل config**
+مثال یک گروه (درون config/theme_settings_definitions.php):
+```php
+return [
+    'general' => [
+        'menu_slug'   => 'theme-settings-general-settings',
+        'menu_order'  => 0,
+        'title'       => __('تنظیمات عمومی', 'your-textdomain'),
+        'capability'  => 'manage_options', // سطح دسترسی این صفحه
+        'fields' => [
+            [
+                'type' => 'text',
+                'label' => 'متن دلخواه',
+                'name'  => 'my_option',
+                // ...
+                'capability' => 'edit_theme_options', // فقط کاربران خاص این فیلد را خواهند دید!
+            ],
+            // ...
+        ]
+    ],
+    // سایر گروه‌ها
+];
+```
+
+### سفارشی‌سازی سطح دسترسی برای صفحه/زیرمنو
+
+در هر آرایه گرو‌ه (صفحه تنظیمات) کلید `capability` را ست کنید:
+- برای پنل فقط مدیر: `'capability' => 'manage_options'`
+- فقط ادیتور: `'capability'=>'edit_pages'`
+- برای کاربر سفارشی: `'capability'=>'your_custom_capability'`
+
+در هر فیلد جدا نیز می‌توانید `'capability' => ...` بدهید تا همان فیلد بسته به نقش نمایش داده شود.
+
+### حذف فیلد برای نقش کاربر
+
+کافیست همانطور که بالا گفته شد، در هر فیلد `capability` یا `visible_for_roles` مشخص کنید. کلاس به صورت خودکار (در prepareFields) این فیلد را برای کاربران فاقد این حق نمایش نخواهد داد.
+
+**مثال:**
+```php
+[
+    'type' => 'text',
+    'label' => 'کد محرمانه',
+    'name'  => 'admin_code',
+    'capability' => 'manage_options',
+],
+[
+    'type' => 'text',
+    'label' => 'فقط برای نویسنده',
+    'name'  => 'editor_code',
+    'visible_for_roles' => ['editor']
+],
+```
+
+### انتقال منو به بخش "نمایش › تنظیمات قالب"
+
+اگر می‌خواهید صفحه تنظیمات در منوی "نمایش" وردپرس درج شود:
+```php
+acf_add_options_page([
+    'page_title'  => __('Theme Settings', 'your-textdomain'),
+    'menu_title'  => __('Theme Settings', 'your-textdomain'),
+    'menu_slug'   => 'theme-settings',
+    'capability'  => 'manage_options',
+    'parent_slug' => 'themes.php', // اضافه کنید
+    'redirect'    => false,
+    'icon_url'    => 'dashicons-admin-customizer',
+    'position'    => 60,
+]);
+```
+در کلاس Theme_Settings_ACF همین مقدار را در main یا زیرمنوها استفاده کنید.
+
+### دریافت گزینه‌ها در نمای وبسایت
+
+برای دریافت هر گزینه در قالب:
+```php
+function theme_option($field, $group = 'general') {
+    $prefix = [
+        // ... همان prefix های داخل کلاس ...
+    ];
+    $fieldname = ($prefix[$group] ?? '') . $field;
+    return function_exists('get_field') ? get_field($fieldname, 'option') : null;
+}
+```
+
+### چندزبانه و ترجمه
+
+در فایل config همه labelها و instructions باید با تابع `__()` و دامین مناسب وارد شوند تا WPML/Polylang آماده ترجمه باشد.
+
+### وابستگی‌ها
+
+- **ACF Pro** باید فعال باشد (در صورت نبود، پیام خطای مناسب برای مدیر سایت نمایش داده می‌شود).
+- حداقل وردپرس ۵ و PHP ۷.۴.
+- config theme_settings_definitions.php وجود داشته باشد.
+
+### نکات پیشرفته
+
+- می‌توانید در هر فیلد آرگومان‌های threshold دیتاتایپ یا custom property قرار دهید و prepareFields را بسته به نیاز تغییر دهید.
+- کلاس باز است و با فیلترهای وردپرس (مانند yourtheme_theme_settings_acf_groups) به آسانی قابل توسعه توسط افزونه یا قالب child می‌باشد.
+
+---
+
+## خلاصه
+
+- کد مدیریت تنظیمات قالب شما کاملاً داینامیک، OOP و قابل سفارشی‌سازی برای هر سطح دسترسی و هر پروژه است.
+- افزودن یا حذف هر تنظیم فقط با تغییر config و بدون نیاز به دستکاری کد کلاس.
+- نمایش تنظیمات قالب در هر بخش از منو (مستقل، زیر نمایش، یا حتی شاخه سفارشی دیگر وردپرس) تنها با تغییر یک کلید parent_slug.
+- پشتیبانی قوی برای استارتاپ‌های حرفه‌ای و پروژه‌های بزرگ!
+
+برای مثال از فایل config یا override رفتار خاص فقط کافی است یک آرایه جدید بسازید یا با فیلتر سابق، تغییر دهید.
+
+
+
 ### نکات مهم
 1. **امنیت**: همیشه از توابع اعتبارسنجی و sanitize برای داده‌های ورودی استفاده کنید.
 2. **عملکرد**: برای بهبود عملکرد، از سیستم کش به درستی استفاده کنید.

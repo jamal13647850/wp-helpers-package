@@ -6,6 +6,7 @@ return [
         'menu_slug'   => 'theme-settings-general-settings',
         'menu_order'  => 0,
         'title'       => 'تنظیمات عمومی',
+        'capability' => 'manage_options',
         'fields' => [
             [
                 'type' => 'tab',
@@ -83,6 +84,7 @@ return [
         'menu_slug'   => 'theme-settings-header-settings',
         'menu_order'  => 1,
         'title'       => 'تنظیمات هدر',
+        'capability' => 'manage_options',
         'fields' => [
             [
                 'type' => 'tab',
@@ -163,6 +165,7 @@ return [
         'menu_slug'   => 'theme-settings-footer-settings',
         'menu_order'  => 2,
         'title'       => 'تنظیمات فوتر',
+        'capability' => 'manage_options',
         'fields' => [
             [
                 'type' => 'tab',
@@ -233,12 +236,12 @@ return [
         ]
     ],
 
-    // ادامه theme_settings_definitions.php
 
     'homepage' => [
         'menu_slug'   => 'theme-settings-homepage-settings',
         'menu_order'  => 3,
         'title'       => 'تنظیمات صفحه اصلی',
+        'capability' => 'manage_options',
         'fields' => [
             [
                 'type' => 'tab',
@@ -325,6 +328,7 @@ return [
         'menu_slug'   => 'theme-settings-shop-settings',
         'menu_order'  => 4,
         'title'       => 'تنظیمات فروشگاه',
+        'capability' => 'manage_options',
         'fields' => [
             [
                 'type' => 'tab',
@@ -363,6 +367,7 @@ return [
         'menu_slug'   => 'theme-settings-inner-pages-settings',
         'menu_order'  => 5,
         'title'       => 'تنظیمات صفحات داخلی',
+        'capability' => 'manage_options',
         'fields' => [
             [
                 'type' => 'tab',
@@ -406,6 +411,7 @@ return [
         'menu_slug'   => 'theme-settings-contact-settings',
         'menu_order'  => 6,
         'title'       => 'تنظیمات تماس با ما',
+        'capability' => 'manage_options',
         'fields' => [
             [
                 'type' => 'tab',
@@ -440,6 +446,7 @@ return [
         'menu_slug'   => 'theme-settings-about-settings',
         'menu_order'  => 7,
         'title'       => 'تنظیمات درباره ما',
+        'capability' => 'manage_options',
         'fields' => [
             [
                 'type' => 'tab',
@@ -557,6 +564,7 @@ return [
         'menu_slug'   => 'theme-settings-social-settings',
         'menu_order'  => 8,
         'title'       => 'تنظیمات شبکه‌های اجتماعی',
+        'capability' => 'manage_options',
         'fields' => [
             [
                 'type' => 'tab',
@@ -665,6 +673,7 @@ return [
         'menu_slug'   => 'theme-settings-scripts-settings',
         'menu_order'  => 9,
         'title'       => 'تنظیمات اسکریپت‌ها',
+        'capability' => 'manage_options',
         'fields' => [
             [
                 'type' => 'tab',
