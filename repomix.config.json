@@ -1,0 +1,49 @@
+{
+    "output": {
+      "filePath": "wphelper.txt",
+      "style": "plain",
+      "parsableStyle": false,
+      "fileSummary": true,
+      "directoryStructure": true,
+      "removeComments": false,
+      "removeEmptyLines": false,
+      "compress": false,
+      "topFilesLength": 5,
+      "showLineNumbers": false,
+      "copyToClipboard": false
+    },
+    "include": [
+      "src/Cache/*.*",
+      "src/Config/*.*",
+      "src/Utilities/Theme_Settings_ACF.php",
+    ],
+    "ignore": {
+      "useGitignore": true,
+      "useDefaultPatterns": true,
+      "customPatterns": [
+        "node_modules/**",
+        "node_scripts/**",
+        "vendor/**",
+        ".editorconfig",
+        ".eslintrc",
+        ".gitignore",
+        ".prettierignore",
+        "composer.*",
+        "LICENSE",
+        "package-lock.json",
+        "package.json",
+        "phpcs.xml.dist",
+        "postcss.config.js",
+        "README.md",
+        "theme/languages/**",
+        "theme/tempates/cache/**",
+        "theme/vendor/**"
+      ]
+    },
+    "security": {
+      "enableSecurityCheck": true
+    },
+    "tokenCount": {
+      "encoding": "o200k_base"
+    }
+  }
