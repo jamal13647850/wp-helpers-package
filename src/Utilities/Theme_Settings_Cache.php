@@ -34,6 +34,7 @@ class Theme_Settings_Cache
      */
     protected function isDebug()
     {
+        if (defined('CACHE_THEME') && CACHE_THEME)      return false;
         if (defined('WP_DEBUG') && WP_DEBUG)      return true;
         if (defined('WP_ENV') && WP_ENV === 'development') return true;
         return false;

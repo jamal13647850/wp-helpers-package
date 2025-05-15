@@ -349,6 +349,7 @@ class Theme_Settings_ACF
     public function getOption(string $field, string $group = 'general')
     {
         try {
+            $this->load_config();
             $prefix = $this->theme_prefix . ($this->prefixes[$group] ?? "{$group}_");
             $field_name = $prefix . $field;
 
