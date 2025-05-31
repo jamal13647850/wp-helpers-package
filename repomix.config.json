@@ -13,9 +13,7 @@
       "copyToClipboard": false
     },
     "include": [
-      "src/Cache/*.*",
-      "src/Config/*.*",
-      "src/Utilities/Theme_Settings_ACF.php",
+      "src/**"
     ],
     "ignore": {
       "useGitignore": true,

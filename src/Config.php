@@ -35,16 +35,16 @@ class Config
         // Set default configuration values
         self::$config = [
             'twig' => [
-                'paths' =>[
-                    'views' => get_template_directory() . '/templates',
+                'paths' => [
+                    'views' => get_template_directory() . '/templates/views',
                 ],
-                'cache'=>[
-                    'enabled'=> defined('WP_ENV') && (WP_ENV==="development") ? false:true,
-                    'path'=> WP_CONTENT_DIR . '/cache/twig',
+                'cache' => [
+                    'enabled' => defined('WP_ENV') && (WP_ENV === "development") ? false : true,
+                    'path' => WP_CONTENT_DIR . '/cache/twig',
                 ],
                 'debug' => defined('WP_DEBUG') ? WP_DEBUG : false,
-                'auto_reload' => defined('WP_DEBUG') && (WP_DEBUG) ? true:false,
-                'strict_variables' => (defined('WP_ENV') && (WP_ENV==="development"))  ? true:false,
+                'auto_reload' => defined('WP_DEBUG') && (WP_DEBUG) ? true : false,
+                'strict_variables' => (defined('WP_ENV') && (WP_ENV === "development"))  ? true : false,
             ],
             'captcha' => [
                 'enabled' => true,
@@ -73,17 +73,29 @@ class Config
                 ],
             ],
             'cache' => [
-                'enabled' => true,
-                'prefix' => 'wphelpers_',
-                'version' => '1.0',
-                'default_expiration' => 3600,
+                'enabled' => defined('WPH_CACHE_ENABLED') ? WPH_CACHE_ENABLED : true,
+                'prefix' => defined('WPH_CACHE_PREFIX') ? WPH_CACHE_PREFIX : 'wphelpers_',
+                'version' => defined('WPH_CACHE_VERSION') ? WPH_CACHE_VERSION : '1.0',
+                'default_expiration' => defined('WPH_CACHE_DEFAULT_EXPIRATION') ? WPH_CACHE_DEFAULT_EXPIRATION : 3600,
             ],
             'comments' => [
-                'rate_limit' => 300, // 5 minutes
-                'max_attempts' => 5,
+                'rate_limit'   => defined('WPH_COMMENTS_RATE_LIMIT') ? WPH_COMMENTS_RATE_LIMIT : 300,
+                'max_attempts' => defined('WPH_COMMENTS_MAX_ATTEMPTS') ? WPH_COMMENTS_MAX_ATTEMPTS : 5,
             ],
-            'htmx' => [
-                'validation_response_type' => 'html',
+            'htmx' =>  [
+                'validation_response_type' => defined('WPH_HTMX_VALIDATION_RESPONSE_TYPE') ? WPH_HTMX_VALIDATION_RESPONSE_TYPE : 'html',
+            ],
+            'megamenu' => [
+                'enabled'   => defined('WPH_MEGAMENU_ENABLED') ? WPH_MEGAMENU_ENABLED : true,
+                'bg_color'  => defined('WPH_MEGAMENU_BG_COLOR') ? WPH_MEGAMENU_BG_COLOR : '#fff',
+                'svg'       => [
+                    'color'       => defined('WPH_MEGAMENU_SVG_COLOR') ? WPH_MEGAMENU_SVG_COLOR : '#000',
+                    'hover_color' => defined('WPH_MEGAMENU_SVG_HOVER_COLOR') ? WPH_MEGAMENU_SVG_HOVER_COLOR : '#0073aa',
+                ],
+                'menu_item' => [
+                    'color'       => defined('WPH_MEGAMENU_MENU_ITEM_COLOR') ? WPH_MEGAMENU_MENU_ITEM_COLOR : '#000',
+                    'hover_color' => defined('WPH_MEGAMENU_MENU_ITEM_HOVER_COLOR') ? WPH_MEGAMENU_MENU_ITEM_HOVER_COLOR : '#0073aa',
+                ],
             ],
         ];
 

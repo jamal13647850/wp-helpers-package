@@ -6,10 +6,12 @@ namespace jamal13647850\wphelpers\Utilities;
 
 defined('ABSPATH') || exit();
 
+use jamal13647850\wphelpers\Language\LanguageManager;
+
 /**
  * Class HTMX_Validator
- * 
- * Validates HTMX requests.
+ *
+ * Validates HTMX requests with multilingual messages.
  */
 class HTMX_Validator
 {
@@ -17,27 +19,27 @@ class HTMX_Validator
      * @var View
      */
     private View $view;
-    
+
     /**
      * @var array
      */
     private array $errors = [];
-    
+
     /**
      * @var array
      */
     private array $data = [];
-    
+
     /**
      * @var array
      */
     private array $rules = [];
-    
+
     /**
      * @var array
      */
     private array $messages = [];
-    
+
     /**
      * HTMX_Validator constructor.
      *
@@ -47,7 +49,7 @@ class HTMX_Validator
     {
         $this->view = $view ?? new View();
     }
-    
+
     /**
      * Validate request data.
      *
@@ -62,30 +64,30 @@ class HTMX_Validator
         $this->rules = $rules;
         $this->messages = $messages;
         $this->errors = [];
-        
+
         foreach ($rules as $field => $field_rules) {
             $field_rules = explode('|', $field_rules);
-            
+
             foreach ($field_rules as $rule) {
                 $rule_parts = explode(':', $rule);
                 $rule_name = $rule_parts[0];
                 $rule_params = isset($rule_parts[1]) ? explode(',', $rule_parts[1]) : [];
-                
+
                 $method = 'validate' . ucfirst($rule_name);
-                
+
                 if (method_exists($this, $method)) {
                     $value = $data[$field] ?? null;
-                    
+
                     if (!$this->$method($field, $value, $rule_params)) {
                         $this->addError($field, $rule_name, $rule_params);
                     }
                 }
             }
         }
-        
+
         return empty($this->errors);
     }
-    
+
     /**
      * Add a validation error.
      *
@@ -96,12 +98,15 @@ class HTMX_Validator
      */
     private function addError(string $field, string $rule, array $params = []): void
     {
-        $message = $this->messages[$field . '.' . $rule] ?? $this->messages[$field] ?? $this->getDefaultMessage($field, $rule, $params);
+        $message = $this->messages[$field . '.' . $rule]
+            ?? $this->messages[$field]
+            ?? $this->getDefaultMessage($field, $rule, $params);
+
         $message = $this->replacePlaceholders($message, $field, $params);
-        
+
         $this->errors[$field][] = $message;
     }
-    
+
     /**
      * Get a default error message.
      *
@@ -112,52 +117,66 @@ class HTMX_Validator
      */
     private function getDefaultMessage(string $field, string $rule, array $params = []): string
     {
-        $field_name = ucfirst(str_replace('_', ' ', $field));
-        
+        $lang = LanguageManager::getInstance();
+
         switch ($rule) {
             case 'required':
-                return __('The :field field is required.', 'wphelpers');
+                return $lang->trans('validator_required', null, 'The :field field is required.');
             case 'email':
-                return __('The :field field must be a valid email address.', 'wphelpers');
+                return $lang->trans('validator_email', null, 'The :field field must be a valid email address.');
             case 'url':
-                return __('The :field field must be a valid URL.', 'wphelpers');
+                return $lang->trans('validator_url', null, 'The :field field must be a valid URL.');
             case 'numeric':
-                return __('The :field field must be a number.', 'wphelpers');
+                return $lang->trans('validator_numeric', null, 'The :field field must be a number.');
             case 'integer':
-                return __('The :field field must be an integer.', 'wphelpers');
+                return $lang->trans('validator_integer', null, 'The :field field must be an integer.');
             case 'min':
-                return __('The :field field must be at least :min characters.', 'wphelpers');
+                return $lang->trans('validator_min', null, 'The :field field must be at least :min characters.');
             case 'max':
-                return __('The :field field must not exceed :max characters.', 'wphelpers');
+                return $lang->trans('validator_max', null, 'The :field field must not exceed :max characters.');
             case 'between':
-                return __('The :field field must be between :min and :max characters.', 'wphelpers');
+                return $lang->trans('validator_between', null, 'The :field field must be between :min and :max characters.');
             case 'in':
-                return __('The selected :field is invalid.', 'wphelpers');
+                return $lang->trans('validator_in', null, 'The selected :field is invalid.');
             case 'not_in':
-                return __('The selected :field is invalid.', 'wphelpers');
+                return $lang->trans('validator_not_in', null, 'The selected :field is invalid.');
             case 'regex':
-                return __('The :field format is invalid.', 'wphelpers');
+                return $lang->trans('validator_regex', null, 'The :field format is invalid.');
             case 'date':
-                return __('The :field field must be a valid date.', 'wphelpers');
+                return $lang->trans('validator_date', null, 'The :field field must be a valid date.');
             case 'date_format':
-                return __('The :field field must match the format :format.', 'wphelpers');
+                return $lang->trans('validator_date_format', null, 'The :field field must match the format :format.');
             case 'before':
-                return __('The :field field must be a date before :date.', 'wphelpers');
+                return $lang->trans('validator_before', null, 'The :field field must be a date before :date.');
             case 'after':
-                return __('The :field field must be a date after :date.', 'wphelpers');
+                return $lang->trans('validator_after', null, 'The :field field must be a date after :date.');
             case 'same':
-                return __('The :field field must match the :other field.', 'wphelpers');
+                return $lang->trans('validator_same', null, 'The :field field must match the :other field.');
             case 'different':
-                return __('The :field field must be different from the :other field.', 'wphelpers');
+                return $lang->trans('validator_different', null, 'The :field field must be different from the :other field.');
             case 'unique':
-                return __('The :field has already been taken.', 'wphelpers');
+                return $lang->trans('validator_unique', null, 'The :field has already been taken.');
             case 'exists':
-                return __('The selected :field is invalid.', 'wphelpers');
+                return $lang->trans('validator_exists', null, 'The selected :field is invalid.');
+            case 'wp_nonce':
+                return $lang->trans('validator_wp_nonce', null, 'Invalid WordPress nonce.');
+            case 'wp_cap':
+                return $lang->trans('validator_wp_cap', null, 'You do not have permission.');
+            case 'file_type':
+                return $lang->trans('validator_file_type', null, 'Invalid file type.');
+            case 'file_size':
+                return $lang->trans('validator_file_size', null, 'File size exceeds the allowed maximum.');
+            case 'file_image':
+                return $lang->trans('validator_file_image', null, 'Only image files are allowed.');
+            case 'recaptcha':
+                return $lang->trans('validator_recaptcha', null, 'Recaptcha validation failed.');
+            case 'honeypot':
+                return $lang->trans('validator_honeypot', null, 'Form submission failed.');
             default:
-                return __('The :field field is invalid.', 'wphelpers');
+                return $lang->trans('validator_default', null, 'The :field field is invalid.');
         }
     }
-    
+
     /**
      * Replace message placeholders.
      *
@@ -169,27 +188,27 @@ class HTMX_Validator
     private function replacePlaceholders(string $message, string $field, array $params = []): string
     {
         $field_name = ucfirst(str_replace('_', ' ', $field));
-        
+
         $replacements = [
             ':field' => $field_name,
         ];
-        
+
         if (isset($params[0])) {
             $replacements[':min'] = $params[0];
-            $replacements[':max'] = $params[0];
+            $replacements[':max'] = isset($params[1]) ? $params[1] : $params[0];
             $replacements[':size'] = $params[0];
             $replacements[':date'] = $params[0];
             $replacements[':format'] = $params[0];
             $replacements[':other'] = ucfirst(str_replace('_', ' ', $params[0]));
         }
-        
+
         if (isset($params[1])) {
             $replacements[':max'] = $params[1];
         }
-        
-        return str_replace(array_keys($replacements), array_values($replacements), $message);
+
+        return strtr($message, $replacements);
     }
-    
+
     /**
      * Get all validation errors.
      *
@@ -199,7 +218,7 @@ class HTMX_Validator
     {
         return $this->errors;
     }
-    
+
     /**
      * Get the first error for a field.
      *
@@ -210,7 +229,7 @@ class HTMX_Validator
     {
         return $this->errors[$field][0] ?? null;
     }
-    
+
     /**
      * Check if a field has errors.
      *
@@ -221,7 +240,7 @@ class HTMX_Validator
     {
         return isset($this->errors[$field]);
     }
-    
+
     /**
      * Get all errors as a flat array.
      *
@@ -230,16 +249,16 @@ class HTMX_Validator
     public function getFlatErrors(): array
     {
         $flat = [];
-        
+
         foreach ($this->errors as $field => $errors) {
             foreach ($errors as $error) {
                 $flat[] = $error;
             }
         }
-        
+
         return $flat;
     }
-    
+
     /**
      * Render validation errors.
      *
@@ -253,18 +272,10 @@ class HTMX_Validator
             'errors' => $this->errors,
             'flat_errors' => $this->getFlatErrors(),
         ], $data);
-        
+
         return $this->view->render($template, $data);
     }
-    
-    /**
-     * Validate required rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateRequired(string $field, $value, array $params = []): bool
     {
         if (is_null($value)) {
@@ -274,483 +285,251 @@ class HTMX_Validator
         } elseif (is_array($value) && count($value) < 1) {
             return false;
         }
-        
         return true;
     }
-    
-    /**
-     * Validate email rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateEmail(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
         return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
     }
-    
-    /**
-     * Validate URL rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateUrl(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
         return filter_var($value, FILTER_VALIDATE_URL) !== false;
     }
-    
-    /**
-     * Validate numeric rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateNumeric(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
         return is_numeric($value);
     }
-    
-    /**
-     * Validate integer rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateInteger(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
         return filter_var($value, FILTER_VALIDATE_INT) !== false;
     }
-    
-    /**
-     * Validate min rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateMin(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
         $min = (int)($params[0] ?? 0);
-        
+
         if (is_numeric($value)) {
             return $value >= $min;
         }
-        
+
         return mb_strlen($value) >= $min;
     }
-    
-    /**
-     * Validate max rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateMax(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
+
         $max = (int)($params[0] ?? 0);
-        
+
         if (is_numeric($value)) {
             return $value <= $max;
         }
-        
         return mb_strlen($value) <= $max;
     }
-    
-    /**
-     * Validate between rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateBetween(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
+
         $min = (int)($params[0] ?? 0);
         $max = (int)($params[1] ?? 0);
-        
+
         if (is_numeric($value)) {
             return $value >= $min && $value <= $max;
         }
-        
+
         $length = mb_strlen($value);
         return $length >= $min && $length <= $max;
     }
-    
-    /**
-     * Validate in rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateIn(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
         return in_array($value, $params);
     }
-    
-    /**
-     * Validate not_in rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateNotIn(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
         return !in_array($value, $params);
     }
-    
-    /**
-     * Validate regex rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateRegex(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
         $pattern = $params[0] ?? '';
-        
         return preg_match($pattern, $value) > 0;
     }
-    
-    /**
-     * Validate date rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateDate(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
         $date = date_create($value);
         return $date !== false;
     }
-    
-    /**
-     * Validate date_format rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateDateFormat(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
         $format = $params[0] ?? 'Y-m-d';
         $date = \DateTime::createFromFormat($format, $value);
-        
         return $date !== false && $date->format($format) === $value;
     }
-    
-    /**
-     * Validate before rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateBefore(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
+
         $date = date_create($value);
         $before = date_create($params[0] ?? 'now');
-        
         return $date !== false && $before !== false && $date < $before;
     }
-    
-    /**
-     * Validate after rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateAfter(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
+
         $date = date_create($value);
         $after = date_create($params[0] ?? 'now');
-        
         return $date !== false && $after !== false && $date > $after;
     }
-    
-    /**
-     * Validate same rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateSame(string $field, $value, array $params = []): bool
     {
         $other_field = $params[0] ?? '';
         $other_value = $this->data[$other_field] ?? null;
-        
         return $value === $other_value;
     }
-    
-    /**
-     * Validate different rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateDifferent(string $field, $value, array $params = []): bool
     {
         $other_field = $params[0] ?? '';
         $other_value = $this->data[$other_field] ?? null;
-        
         return $value !== $other_value;
     }
-    
-    /**
-     * Validate unique rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateUnique(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
         global $wpdb;
-        
         $table = $wpdb->prefix . ($params[0] ?? '');
         $column = $params[1] ?? $field;
         $except_column = $params[2] ?? 'id';
         $except_value = $params[3] ?? null;
-        
         $query = $wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE {$column} = %s", $value);
-        
         if ($except_value !== null) {
             $query .= $wpdb->prepare(" AND {$except_column} != %s", $except_value);
         }
-        
         $count = $wpdb->get_var($query);
-        
         return $count == 0;
     }
-    
-    /**
-     * Validate exists rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateExists(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return true;
         }
-        
         global $wpdb;
-        
         $table = $wpdb->prefix . ($params[0] ?? '');
         $column = $params[1] ?? $field;
-        
         $query = $wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE {$column} = %s", $value);
         $count = $wpdb->get_var($query);
-        
         return $count > 0;
     }
-    
-    /**
-     * Validate WordPress nonce.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateWpNonce(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return false;
         }
-        
         $action = $params[0] ?? -1;
-        
         return wp_verify_nonce($value, $action);
     }
-    
-    /**
-     * Validate WordPress capability.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateWpCap(string $field, $value, array $params = []): bool
     {
         $capability = $params[0] ?? '';
-        
         return current_user_can($capability);
     }
-    
-    /**
-     * Validate file type.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateFileType(string $field, $value, array $params = []): bool
     {
         if (empty($value) || !isset($_FILES[$field])) {
             return true;
         }
-        
         $file = $_FILES[$field];
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        
         return in_array($extension, $params);
     }
-    
-    /**
-     * Validate file size.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateFileSize(string $field, $value, array $params = []): bool
     {
         if (empty($value) || !isset($_FILES[$field])) {
             return true;
         }
-        
         $file = $_FILES[$field];
         $max_size = (int)($params[0] ?? 0) * 1024 * 1024; // Convert MB to bytes
-        
         return $file['size'] <= $max_size;
     }
-    
-    /**
-     * Validate file image.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateFileImage(string $field, $value, array $params = []): bool
     {
         if (empty($value) || !isset($_FILES[$field])) {
             return true;
         }
-        
         $file = $_FILES[$field];
         $type = $file['type'];
-        
         return strpos($type, 'image/') === 0;
     }
-    
-    /**
-     * Validate recaptcha.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateRecaptcha(string $field, $value, array $params = []): bool
     {
         if (empty($value)) {
             return false;
         }
-        
-        $secret = $params[0] ?? Config::get('recaptcha.secret_key', '');
-        
+        $secret = $params[0] ?? (defined('Config') ? Config::get('recaptcha.secret_key', '') : '');
         if (empty($secret)) {
             return false;
         }
-        
         $response = wp_remote_post('https://www.google.com/recaptcha/api/siteverify', [
             'body' => [
                 'secret' => $secret,
@@ -758,49 +537,28 @@ class HTMX_Validator
                 'remoteip' => $_SERVER['REMOTE_ADDR'] ?? '',
             ],
         ]);
-        
         if (is_wp_error($response)) {
             return false;
         }
-        
         $body = wp_remote_retrieve_body($response);
         $data = json_decode($body, true);
-        
         return isset($data['success']) && $data['success'] === true;
     }
-    
-    /**
-     * Validate honeypot.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateHoneypot(string $field, $value, array $params = []): bool
     {
         return empty($value);
     }
-    
-    /**
-     * Validate custom rule.
-     *
-     * @param string $field Field name
-     * @param mixed $value Field value
-     * @param array $params Rule parameters
-     * @return bool True if validation passes, false otherwise
-     */
+
     private function validateCustom(string $field, $value, array $params = []): bool
     {
         $callback = $params[0] ?? '';
-        
         if (is_callable($callback)) {
             return call_user_func($callback, $value, $field, $this->data);
         }
-        
         return false;
     }
-    
+
     /**
      * Get validated data.
      *
@@ -809,16 +567,16 @@ class HTMX_Validator
     public function getValidatedData(): array
     {
         $validated = [];
-        
+
         foreach ($this->rules as $field => $rules) {
             if (isset($this->data[$field])) {
                 $validated[$field] = $this->data[$field];
             }
         }
-        
+
         return $validated;
     }
-    
+
     /**
      * Get only the specified fields from the validated data.
      *
@@ -829,16 +587,16 @@ class HTMX_Validator
     {
         $validated = $this->getValidatedData();
         $filtered = [];
-        
+
         foreach ($fields as $field) {
             if (isset($validated[$field])) {
                 $filtered[$field] = $validated[$field];
             }
         }
-        
+
         return $filtered;
     }
-    
+
     /**
      * Get all fields except the specified ones from the validated data.
      *
@@ -848,14 +606,14 @@ class HTMX_Validator
     public function except(array $fields): array
     {
         $validated = $this->getValidatedData();
-        
+
         foreach ($fields as $field) {
             unset($validated[$field]);
         }
-        
+
         return $validated;
     }
-    
+
     /**
      * Send HTMX validation response.
      *
@@ -870,7 +628,7 @@ class HTMX_Validator
         echo $this->renderErrors($template, $data);
         exit;
     }
-    
+
     /**
      * Send HTMX validation error response.
      *
@@ -885,7 +643,7 @@ class HTMX_Validator
         http_response_code($status);
         exit;
     }
-    
+
     /**
      * Send HTMX validation success response.
      *
@@ -901,7 +659,7 @@ class HTMX_Validator
                 'type' => 'success',
             ],
         ], $trigger);
-        
+
         header('HX-Trigger: ' . json_encode($trigger_data));
         exit;
     }

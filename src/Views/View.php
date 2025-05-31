@@ -47,11 +47,11 @@ class View
     {
         // Initialize view paths from config
         $this->paths = [
-            '@views' => Config::get('views.path', get_template_directory() . '/templates/views'),
+            '@views' => Config::get('twig.paths.views', get_template_directory() . '/templates/views'),
         ];
         
         // Add custom paths from config
-        $custom_paths = Config::get('views.paths.custom', []);
+        $custom_paths = Config::get('twig.paths..custom', []);
         foreach ($custom_paths as $namespace => $path) {
             $this->paths[$namespace] = $path;
         }

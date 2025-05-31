@@ -9,11 +9,13 @@ defined('ABSPATH') || exit();
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
+use jamal13647850\wphelpers\Language\LanguageManager; // Multilingual core
 
 /**
  * Class WordPressTwigExtension
- * 
- * Adds WordPress specific filters and functions to Twig.
+ *
+ * Adds WordPress specific filters and functions to Twig,
+ * with custom multilingual integration via LanguageManager.
  */
 class WordPressTwigExtension extends AbstractExtension
 {
@@ -26,7 +28,7 @@ class WordPressTwigExtension extends AbstractExtension
     {
         return 'wordpress';
     }
-    
+
     /**
      * Get the filters defined in this extension.
      *
@@ -49,10 +51,24 @@ class WordPressTwigExtension extends AbstractExtension
             new TwigFilter('apply_filters', 'apply_filters', ['is_variadic' => true]),
             new TwigFilter('shortcodes', 'do_shortcode'),
             new TwigFilter('slugify', 'sanitize_title'),
-            new TwigFilter('translate', '__'),
+            // Multilingual: use LanguageManager as main translation filter
+            new TwigFilter('translate', [$this, 'twigTranslate']),
         ];
     }
-    
+
+    /**
+     * Multilingual translate filter for Twig.
+     * Usage: {{ 'submit'|translate }} or with fallback: {{ 'submit'|translate('ارسال') }}
+     *
+     * @param string $key      Translation key
+     * @param string|null $default Fallback/default text if not found
+     * @return string          Translated string
+     */
+    public function twigTranslate(string $key, ?string $default = null): string
+    {
+        return LanguageManager::getInstance()->trans($key, null, $default);
+    }
+
     /**
      * Get the functions defined in this extension.
      *
@@ -162,7 +178,7 @@ class WordPressTwigExtension extends AbstractExtension
             new TwigFunction('current_user_can', 'current_user_can'),
         ];
     }
-    
+
     /**
      * Sanitize a value based on the type.
      *
@@ -194,7 +210,7 @@ class WordPressTwigExtension extends AbstractExtension
                 return sanitize_text_field($value);
         }
     }
-    
+
     /**
      * Format a date.
      *
@@ -207,14 +223,14 @@ class WordPressTwigExtension extends AbstractExtension
         if (empty($format)) {
             $format = get_option('date_format');
         }
-        
+
         if (is_numeric($date)) {
             return date_i18n($format, (int)$date);
         }
-        
+
         return date_i18n($format, strtotime($date));
     }
-    
+
     /**
      * Execute a WordPress query.
      *
@@ -259,12 +275,12 @@ class WordPressTwigExtension extends AbstractExtension
             'is_posts_page' => $query->is_posts_page(),
             'is_post_type_archive' => $query->is_post_type_archive(),
         ];
-        
+
         wp_reset_postdata();
-        
+
         return $result;
     }
-    
+
     /**
      * Render a WordPress menu.
      *
@@ -276,16 +292,16 @@ class WordPressTwigExtension extends AbstractExtension
         if (is_string($args)) {
             $args = ['theme_location' => $args];
         }
-        
+
         $defaults = [
             'echo' => false,
         ];
-        
+
         $args = wp_parse_args($args, $defaults);
-        
+
         return wp_nav_menu($args);
     }
-    
+
     /**
      * Render a WordPress sidebar.
      *
@@ -298,33 +314,33 @@ class WordPressTwigExtension extends AbstractExtension
         if (!is_active_sidebar($id)) {
             return false;
         }
-        
+
         ob_start();
         dynamic_sidebar($id);
         return ob_get_clean();
     }
-    
+
     /**
-     * Render WordPress pagination.
+     * Render WordPress pagination with multilingual support.
      *
      * @param array $args Pagination arguments
      * @return string Pagination HTML
      */
     public function wpPagination(array $args = []): string
     {
+        $lang = LanguageManager::getInstance();
         $defaults = [
             'mid_size' => 2,
-            'prev_text' => __('&laquo; Previous', 'wphelpers'),
-            'next_text' => __('Next &raquo;', 'wphelpers'),
-            'screen_reader_text' => __('Posts navigation', 'wphelpers'),
+            'prev_text' => $lang->trans('pagination_prev', null, '&laquo; Previous'),
+            'next_text' => $lang->trans('pagination_next', null, 'Next &raquo;'),
+            'screen_reader_text' => $lang->trans('pagination_navigation', null, 'Posts navigation'),
             'type' => 'array',
             'total' => 0,
             'current' => 0,
         ];
-        
+
         $args = wp_parse_args($args, $defaults);
-        
-        // If total and current are set, use them
+
         if ($args['total'] > 0 && $args['current'] > 0) {
             $links = paginate_links($args);
         } else {
@@ -333,7 +349,7 @@ class WordPressTwigExtension extends AbstractExtension
             $args['current'] = max(1, get_query_var('paged'));
             $links = paginate_links($args);
         }
-        
+
         if (is_array($links)) {
             $html = '<nav class="navigation pagination" role="navigation">';
             $html .= '<h2 class="screen-reader-text">' . $args['screen_reader_text'] . '</h2>';
@@ -341,24 +357,27 @@ class WordPressTwigExtension extends AbstractExtension
             $html .= implode('', $links);
             $html .= '</div>';
             $html .= '</nav>';
-            
+
             return $html;
         }
-        
+
         return '';
     }
-    
+
     /**
-     * Render WordPress breadcrumbs.
+     * Render WordPress breadcrumbs with multilingual support.
      *
      * @param array $args Breadcrumbs arguments
      * @return string Breadcrumbs HTML
      */
     public function wpBreadcrumbs(array $args = []): string
     {
+        $lang = LanguageManager::getInstance();
+        global $post;
+
         $defaults = [
             'delimiter' => '&raquo;',
-            'home' => __('Home', 'wphelpers'),
+            'home' => $lang->trans('home', null, 'Home'),
             'show_home' => true,
             'show_current' => true,
             'before' => '<span class="current">',
@@ -366,81 +385,74 @@ class WordPressTwigExtension extends AbstractExtension
             'before_item' => '',
             'after_item' => '',
         ];
-        
+
         $args = wp_parse_args($args, $defaults);
-        
-        $html = '<nav class="breadcrumbs" aria-label="' . __('Breadcrumbs', 'wphelpers') . '">';
+
+        $html = '<nav class="breadcrumbs" aria-label="' . $lang->trans('breadcrumbs_aria', null, 'Breadcrumbs') . '">';
         $html .= '<ol class="breadcrumb">';
-        
-        // Home link
+
         if ($args['show_home']) {
             $html .= $args['before_item'] . '<li class="breadcrumb-item"><a href="' . esc_url(home_url('/')) . '">' . $args['home'] . '</a></li>' . $args['after_item'];
         }
-        
+
         if (is_category() || is_single()) {
             $html .= $args['before_item'] . '<li class="breadcrumb-item">' . $args['delimiter'] . ' ';
-            
-            // Category
+
             if (is_category()) {
                 $cat = get_category(get_query_var('cat'), false);
-                
-                if ($cat->parent != 0) {
+
+                if ($cat && $cat->parent != 0) {
                     $parent_categories = get_category_parents($cat->parent, true, ' ' . $args['delimiter'] . ' ');
                     $html .= substr($parent_categories, 0, -3);
                 }
-                
+
                 $html .= $args['before'] . single_cat_title('', false) . $args['after'];
             }
-            
-            // Single post
+
             if (is_single()) {
-                // Categories
                 $categories = get_the_category();
-                
+
                 if (!empty($categories)) {
                     $category = $categories[0];
-                    
+
                     if ($category->parent != 0) {
                         $parent_categories = get_category_parents($category->parent, true, ' ' . $args['delimiter'] . ' ');
                         $html .= substr($parent_categories, 0, -3);
                     }
-                    
+
                     $html .= '<a href="' . esc_url(get_category_link($category->term_id)) . '">' . $category->name . '</a> ' . $args['delimiter'] . ' ';
                 }
-                
-                // Post title
+
                 if ($args['show_current']) {
                     $html .= $args['before'] . get_the_title() . $args['after'];
                 }
             }
-            
+
             $html .= '</li>' . $args['after_item'];
         } elseif (is_page()) {
             $html .= $args['before_item'] . '<li class="breadcrumb-item">' . $args['delimiter'] . ' ';
-            
-            // Parent pages
-            if ($post->post_parent) {
+
+            if (isset($post) && $post->post_parent) {
                 $parent_id = $post->post_parent;
                 $breadcrumbs = [];
-                
+
                 while ($parent_id) {
                     $page = get_post($parent_id);
                     $breadcrumbs[] = '<a href="' . esc_url(get_permalink($page->ID)) . '">' . get_the_title($page->ID) . '</a>';
                     $parent_id = $page->post_parent;
                 }
-                
+
                 $breadcrumbs = array_reverse($breadcrumbs);
-                
+
                 foreach ($breadcrumbs as $crumb) {
                     $html .= $crumb . ' ' . $args['delimiter'] . ' ';
                 }
             }
-            
-            // Current page
+
             if ($args['show_current']) {
                 $html .= $args['before'] . get_the_title() . $args['after'];
             }
-            
+
             $html .= '</li>' . $args['after_item'];
         } elseif (is_tag()) {
             $html .= $args['before_item'] . '<li class="breadcrumb-item">' . $args['delimiter'] . ' ' . $args['before'] . single_tag_title('', false) . $args['after'] . '</li>' . $args['after_item'];
@@ -457,17 +469,17 @@ class WordPressTwigExtension extends AbstractExtension
         } elseif (is_post_type_archive()) {
             $html .= $args['before_item'] . '<li class="breadcrumb-item">' . $args['delimiter'] . ' ' . $args['before'] . post_type_archive_title('', false) . $args['after'] . '</li>' . $args['after_item'];
         } elseif (is_search()) {
-            $html .= $args['before_item'] . '<li class="breadcrumb-item">' . $args['delimiter'] . ' ' . $args['before'] . __('Search results for', 'wphelpers') . ' "' . get_search_query() . '"' . $args['after'] . '</li>' . $args['after_item'];
+            $html .= $args['before_item'] . '<li class="breadcrumb-item">' . $args['delimiter'] . ' ' . $args['before'] . $lang->trans('search_results_for', null, 'Search results for') . ' "' . get_search_query() . '"' . $args['after'] . '</li>' . $args['after_item'];
         } elseif (is_404()) {
-            $html .= $args['before_item'] . '<li class="breadcrumb-item">' . $args['delimiter'] . ' ' . $args['before'] . __('404 Not Found', 'wphelpers') . $args['after'] . '</li>' . $args['after_item'];
+            $html .= $args['before_item'] . '<li class="breadcrumb-item">' . $args['delimiter'] . ' ' . $args['before'] . $lang->trans('error_404', null, '404 Not Found') . $args['after'] . '</li>' . $args['after_item'];
         }
-        
+
         $html .= '</ol>';
         $html .= '</nav>';
-        
+
         return $html;
     }
-    
+
     /**
      * Get an image with attributes.
      *
@@ -480,7 +492,7 @@ class WordPressTwigExtension extends AbstractExtension
     {
         return wp_get_attachment_image($attachment_id, $size, false, $attr);
     }
-    
+
     /**
      * Get an image URL.
      *
@@ -493,7 +505,7 @@ class WordPressTwigExtension extends AbstractExtension
         $image = wp_get_attachment_image_src($attachment_id, $size);
         return $image ? $image[0] : false;
     }
-    
+
     /**
      * Get a post thumbnail.
      *
@@ -507,14 +519,14 @@ class WordPressTwigExtension extends AbstractExtension
         if ($post_id === null) {
             $post_id = get_the_ID();
         }
-        
+
         if (has_post_thumbnail($post_id)) {
             return get_the_post_thumbnail($post_id, $size, $attr);
         }
-        
+
         return '';
     }
-    
+
     /**
      * Enqueue an asset.
      *
@@ -535,7 +547,7 @@ class WordPressTwigExtension extends AbstractExtension
             wp_enqueue_style($handle, $src, $deps, $ver);
             return true;
         }
-        
+
         return false;
     }
 }

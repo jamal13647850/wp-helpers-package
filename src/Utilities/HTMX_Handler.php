@@ -6,10 +6,12 @@ namespace jamal13647850\wphelpers\Utilities;
 
 defined('ABSPATH') || exit();
 
+use jamal13647850\wphelpers\Language\LanguageManager;
+
 /**
  * Class HTMX_Handler
- * 
- * Handles HTMX requests.
+ *
+ * Handles HTMX requests with multilingual support via LanguageManager.
  */
 class HTMX_Handler
 {
@@ -17,32 +19,32 @@ class HTMX_Handler
      * @var View
      */
     private View $view;
-    
+
     /**
      * @var HTMX_Validator
      */
     private HTMX_Validator $validator;
-    
+
     /**
      * @var TransientCache
      */
     private TransientCache $cache;
-    
+
     /**
      * @var array
      */
     private array $endpoints = [];
-    
+
     /**
      * @var array
      */
     private array $middleware = [];
-    
+
     /**
      * @var string
      */
     private string $prefix;
-    
+
     /**
      * HTMX_Handler constructor.
      *
@@ -56,27 +58,23 @@ class HTMX_Handler
         $this->validator = $validator ?? new HTMX_Validator($this->view);
         $this->cache = $cache ?? new TransientCache();
         $this->prefix = Config::get('htmx.prefix', 'htmx_');
-        
-        // Register AJAX actions
+
         add_action('wp_ajax_' . $this->prefix . 'endpoint', [$this, 'handleEndpoint']);
         add_action('wp_ajax_nopriv_' . $this->prefix . 'endpoint', [$this, 'handleEndpoint']);
-        
-        // Register default middleware
+
         $this->registerMiddleware('auth', [$this, 'authMiddleware']);
         $this->registerMiddleware('nonce', [$this, 'nonceMiddleware']);
         $this->registerMiddleware('throttle', [$this, 'throttleMiddleware']);
         $this->registerMiddleware('cache', [$this, 'cacheMiddleware']);
-        
-        // Register custom middleware from config
+
         $custom_middleware = Config::get('htmx.middleware', []);
-        
         foreach ($custom_middleware as $name => $callback) {
             if (is_callable($callback)) {
                 $this->registerMiddleware($name, $callback);
             }
         }
     }
-    
+
     /**
      * Register an endpoint.
      *
@@ -88,13 +86,13 @@ class HTMX_Handler
     public function registerEndpoint(string $name, callable $callback, array $middleware = []): self
     {
         $this->endpoints[$name] = [
-            'callback' => $callback,
+            'callback'   => $callback,
             'middleware' => $middleware,
         ];
-        
+
         return $this;
     }
-    
+
     /**
      * Register middleware.
      *
@@ -105,57 +103,70 @@ class HTMX_Handler
     public function registerMiddleware(string $name, callable $callback): self
     {
         $this->middleware[$name] = $callback;
-        
         return $this;
     }
-    
+
     /**
-     * Handle an endpoint request.
+     * Handle an endpoint request with multilingual error messages.
      *
      * @return void
      */
     public function handleEndpoint(): void
     {
+        $lang = LanguageManager::getInstance();
+
         // Check if this is an HTMX request
         $is_htmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
-        
+
         if (!$is_htmx && !Config::get('htmx.allow_non_htmx', false)) {
-            $this->sendError(__('Invalid request', 'wphelpers'), 400);
+            $this->sendError(
+                $lang->trans('invalid_request', null, 'Invalid request'),
+                400
+            );
         }
-        
+
         // Get endpoint name
         $endpoint = sanitize_text_field($_REQUEST['endpoint'] ?? '');
-        
+
         if (empty($endpoint) || !isset($this->endpoints[$endpoint])) {
-            $this->sendError(__('Invalid endpoint', 'wphelpers'), 404);
+            $this->sendError(
+                $lang->trans('invalid_endpoint', null, 'Invalid endpoint'),
+                404
+            );
         }
-        
+
         $endpoint_data = $this->endpoints[$endpoint];
         $callback = $endpoint_data['callback'];
         $middleware = $endpoint_data['middleware'];
-        
+
         // Apply middleware
         foreach ($middleware as $middleware_name) {
             if (isset($this->middleware[$middleware_name])) {
                 $middleware_callback = $this->middleware[$middleware_name];
                 $result = $middleware_callback();
-                
+
                 if ($result === false) {
-                    $this->sendError(__('Middleware check failed', 'wphelpers'), 403);
+                    $this->sendError(
+                        $lang->trans('middleware_failed', null, 'Middleware check failed'),
+                        403
+                    );
                 }
             }
         }
-        
+
         // Call the endpoint callback
         $result = $callback($this);
-        
+
         if ($result === false) {
-            $this->sendError(__('Endpoint execution failed', 'wphelpers'), 500);
+            $this->sendError(
+                $lang->trans('endpoint_failed', null, 'Endpoint execution failed'),
+                500
+            );
         }
-        
+
         exit;
     }
-    
+
     /**
      * Auth middleware.
      *
@@ -165,7 +176,7 @@ class HTMX_Handler
     {
         return is_user_logged_in();
     }
-    
+
     /**
      * Nonce middleware.
      *
@@ -175,10 +186,10 @@ class HTMX_Handler
     {
         $nonce = sanitize_text_field($_REQUEST['_wpnonce'] ?? '');
         $action = sanitize_text_field($_REQUEST['endpoint'] ?? '');
-        
+
         return wp_verify_nonce($nonce, $this->prefix . $action);
     }
-    
+
     /**
      * Throttle middleware.
      *
@@ -191,19 +202,19 @@ class HTMX_Handler
         $key = 'throttle_' . md5($ip . '_' . $endpoint);
         $limit = Config::get('htmx.throttle.limit', 60);
         $period = Config::get('htmx.throttle.period', 60);
-        
-        $count = (int)$this->cache->get($key, 0);
-        
+
+        $count = (int) $this->cache->get($key, 0);
+
         if ($count >= $limit) {
             header('Retry-After: ' . $period);
             return false;
         }
-        
+
         $this->cache->increment($key, 1, $period);
-        
+
         return true;
     }
-    
+
     /**
      * Cache middleware.
      *
@@ -214,25 +225,25 @@ class HTMX_Handler
         if (!Config::get('htmx.cache.enabled', false)) {
             return true;
         }
-        
+
         $endpoint = sanitize_text_field($_REQUEST['endpoint'] ?? '');
         $key = 'cache_' . md5($endpoint . '_' . json_encode($_REQUEST));
         $ttl = Config::get('htmx.cache.ttl', 300);
-        
+
         $cached = $this->cache->get($key);
-        
+
         if ($cached !== null) {
             echo $cached;
             exit;
         }
-        
+
         // Start output buffering
         ob_start();
-        
+
         // Return true to continue processing
         return true;
     }
-    
+
     /**
      * End cache middleware and store result.
      *
@@ -243,17 +254,17 @@ class HTMX_Handler
         if (!Config::get('htmx.cache.enabled', false)) {
             return;
         }
-        
+
         $endpoint = sanitize_text_field($_REQUEST['endpoint'] ?? '');
         $key = 'cache_' . md5($endpoint . '_' . json_encode($_REQUEST));
         $ttl = Config::get('htmx.cache.ttl', 300);
-        
+
         $content = ob_get_clean();
         $this->cache->set($key, $content, $ttl);
-        
+
         echo $content;
     }
-    
+
     /**
      * Validate request data.
      *
@@ -266,7 +277,7 @@ class HTMX_Handler
         $data = $_REQUEST;
         return $this->validator->validate($data, $rules, $messages);
     }
-    
+
     /**
      * Get validated data.
      *
@@ -276,7 +287,7 @@ class HTMX_Handler
     {
         return $this->validator->getValidatedData();
     }
-    
+
     /**
      * Get validation errors.
      *
@@ -286,7 +297,7 @@ class HTMX_Handler
     {
         return $this->validator->getErrors();
     }
-    
+
     /**
      * Send a validation error response.
      *
@@ -299,7 +310,7 @@ class HTMX_Handler
     {
         $this->validator->sendHtmxResponse($target, $template, $data);
     }
-    
+
     /**
      * Send an error response.
      *
@@ -311,7 +322,7 @@ class HTMX_Handler
     {
         $this->validator->sendHtmxError($message, $status);
     }
-    
+
     /**
      * Send a success response.
      *
@@ -323,7 +334,7 @@ class HTMX_Handler
     {
         $this->validator->sendHtmxSuccess($message, $trigger);
     }
-    
+
     /**
      * Render a template.
      *
@@ -335,7 +346,7 @@ class HTMX_Handler
     {
         return $this->view->render($template, $data);
     }
-    
+
     /**
      * Send a rendered template.
      *
@@ -347,7 +358,7 @@ class HTMX_Handler
     {
         echo $this->render($template, $data);
     }
-    
+
     /**
      * Get the AJAX URL for an endpoint.
      *
@@ -359,19 +370,19 @@ class HTMX_Handler
     public function getEndpointUrl(string $endpoint, array $params = [], bool $with_nonce = true): string
     {
         $url = admin_url('admin-ajax.php');
-        
+
         $params = array_merge([
             'action' => $this->prefix . 'endpoint',
             'endpoint' => $endpoint,
         ], $params);
-        
+
         if ($with_nonce) {
             $params['_wpnonce'] = wp_create_nonce($this->prefix . $endpoint);
         }
-        
+
         return add_query_arg($params, $url);
     }
-    
+
     /**
      * Get HTMX attributes for an endpoint.
      *
@@ -383,23 +394,23 @@ class HTMX_Handler
     public function getHtmxAttrs(string $endpoint, array $params = [], array $attrs = []): string
     {
         $url = $this->getEndpointUrl($endpoint, $params);
-        
+
         $default_attrs = [
             'hx-post' => $url,
             'hx-trigger' => 'click',
             'hx-swap' => 'outerHTML',
         ];
-        
+
         $attrs = array_merge($default_attrs, $attrs);
         $html = '';
-        
+
         foreach ($attrs as $name => $value) {
             $html .= ' ' . esc_attr($name) . '="' . esc_attr($value) . '"';
         }
-        
+
         return $html;
     }
-    
+
     /**
      * Register HTMX assets.
      *
@@ -410,7 +421,7 @@ class HTMX_Handler
     {
         $version = Config::get('htmx.version', '1.9.2');
         $min = Config::get('htmx.minified', true) ? '.min' : '';
-        
+
         wp_register_script(
             'htmx',
             "https://unpkg.com/htmx.org@{$version}/dist/htmx{$min}.js",
@@ -418,13 +429,13 @@ class HTMX_Handler
             $version,
             true
         );
-        
+
         wp_enqueue_script('htmx');
-        
+
         // Register extensions
         if ($with_extensions) {
             $extensions = Config::get('htmx.extensions', []);
-            
+
             foreach ($extensions as $name => $path) {
                 wp_register_script(
                     "htmx-{$name}",
@@ -433,11 +444,11 @@ class HTMX_Handler
                     $version,
                     true
                 );
-                
+
                 wp_enqueue_script("htmx-{$name}");
             }
         }
-        
+
         // Add inline script for CSRF protection
         if (Config::get('htmx.csrf_protection', true)) {
             $script = "
@@ -447,11 +458,11 @@ class HTMX_Handler
                     });
                 });
             ";
-            
+
             wp_add_inline_script('htmx', $script);
         }
     }
-    
+
     /**
      * Check if the current request is an HTMX request.
      *
@@ -461,216 +472,106 @@ class HTMX_Handler
     {
         return isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
     }
-    
-    /**
-     * Get the target element of an HTMX request.
-     *
-     * @return string|null Target element or null if not set
-     */
+
     public function getHtmxTarget(): ?string
     {
         return $_SERVER['HTTP_HX_TARGET'] ?? null;
     }
-    
-    /**
-     * Get the trigger element of an HTMX request.
-     *
-     * @return string|null Trigger element or null if not set
-     */
+
     public function getHtmxTrigger(): ?string
     {
         return $_SERVER['HTTP_HX_TRIGGER'] ?? null;
     }
-    
-    /**
-     * Get the trigger name of an HTMX request.
-     *
-     * @return string|null Trigger name or null if not set
-     */
+
     public function getHtmxTriggerName(): ?string
     {
         return $_SERVER['HTTP_HX_TRIGGER_NAME'] ?? null;
     }
-    
-    /**
-     * Get the current URL of an HTMX request.
-     *
-     * @return string|null Current URL or null if not set
-     */
+
     public function getHtmxCurrentUrl(): ?string
     {
         return $_SERVER['HTTP_HX_CURRENT_URL'] ?? null;
     }
-    
-    /**
-     * Get the prompt response of an HTMX request.
-     *
-     * @return string|null Prompt response or null if not set
-     */
+
     public function getHtmxPrompt(): ?string
     {
         return $_SERVER['HTTP_HX_PROMPT'] ?? null;
     }
-    
-    /**
-     * Set a response header for an HTMX request.
-     *
-     * @param string $name Header name
-     * @param string $value Header value
-     * @return void
-     */
+
     public function setHtmxHeader(string $name, string $value): void
     {
         header("HX-{$name}: {$value}");
     }
-    
-    /**
-     * Trigger an event on the client.
-     *
-     * @param string $event Event name
-     * @param array $detail Event detail
-     * @return void
-     */
+
     public function triggerEvent(string $event, array $detail = []): void
     {
         $this->setHtmxHeader('Trigger', json_encode([
             $event => $detail ?: true,
         ]));
     }
-    
-    /**
-     * Redirect to a URL.
-     *
-     * @param string $url URL to redirect to
-     * @return void
-     */
+
     public function redirect(string $url): void
     {
         $this->setHtmxHeader('Redirect', $url);
         exit;
     }
-    
-    /**
-     * Refresh the page.
-     *
-     * @return void
-     */
+
     public function refresh(): void
     {
         $this->setHtmxHeader('Refresh', 'true');
         exit;
     }
-    
-    /**
-     * Set the target element for the response.
-     *
-     * @param string $target Target element
-     * @return void
-     */
+
     public function setTarget(string $target): void
     {
         $this->setHtmxHeader('Retarget', $target);
     }
-    
-    /**
-     * Set the swap method for the response.
-     *
-     * @param string $method Swap method
-     * @return void
-     */
+
     public function setSwap(string $method): void
     {
         $this->setHtmxHeader('Reswap', $method);
     }
-    
-    /**
-     * Push a URL to the browser history.
-     *
-     * @param string $url URL to push
-     * @return void
-     */
+
     public function pushUrl(string $url): void
     {
         $this->setHtmxHeader('Push-Url', $url);
     }
-    
-    /**
-     * Replace the current URL in the browser history.
-     *
-     * @param string $url URL to replace with
-     * @return void
-     */
+
     public function replaceUrl(string $url): void
     {
         $this->setHtmxHeader('Replace-Url', $url);
     }
-    
-    /**
-     * Set the response status code.
-     *
-     * @param int $code Status code
-     * @return void
-     */
+
     public function setStatus(int $code): void
     {
         http_response_code($code);
     }
-    
-    /**
-     * Get the View instance.
-     *
-     * @return View View instance
-     */
+
     public function getView(): View
     {
         return $this->view;
     }
-    
-    /**
-     * Get the Validator instance.
-     *
-     * @return HTMX_Validator Validator instance
-     */
+
     public function getValidator(): HTMX_Validator
     {
         return $this->validator;
     }
-    
-    /**
-     * Get the Cache instance.
-     *
-     * @return TransientCache Cache instance
-     */
+
     public function getCache(): TransientCache
     {
         return $this->cache;
     }
-    
-    /**
-     * Get all registered endpoints.
-     *
-     * @return array Registered endpoints
-     */
+
     public function getEndpoints(): array
     {
         return $this->endpoints;
     }
-    
-    /**
-     * Get all registered middleware.
-     *
-     * @return array Registered middleware
-     */
+
     public function getMiddleware(): array
     {
         return $this->middleware;
     }
-    
-    /**
-     * Get the prefix.
-     *
-     * @return string Prefix
-     */
+
     public function getPrefix(): string
     {
         return $this->prefix;
