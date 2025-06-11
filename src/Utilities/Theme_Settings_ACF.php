@@ -263,7 +263,7 @@ class Theme_Settings_ACF
                     if (isset($f['name']) && $f['type'] !== 'tab') {
                         $fname = $prefix . $f['name'];
                         $result[$f['name']] = function_exists('get_field')
-                            ? get_field($fname, $option_lang)
+                            ? get_field($fname, 'option')
                             : null;
                     }
                 }

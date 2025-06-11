@@ -285,7 +285,7 @@ class AlpineNavWalker extends \Walker_Nav_Menu {
         $indent = str_repeat("\t", $depth + 1);
 
         if ($depth === 0 && $this->menu_type === 'desktop') {
-            $output .= "\n$indent<div class=\"mega-menu absolute left-1/2 w-screen bg-white shadow-xl border-t border-gray-200 z-[112]\" style=\"margin-left: calc(-50vw + 50%);\" x-show=\"open0\" x-cloak x-transition:enter=\"transition ease-out duration-300\" x-transition:enter-start=\"opacity-0 transform translate-y-[-10px]\" x-transition:enter-end=\"opacity-100 transform translate-y-0\" x-transition:leave=\"transition ease-in duration-200\" x-transition:leave-start=\"opacity-100 transform translate-y-0\" x-transition:leave-end=\"opacity-0 transform translate-y-[-10px]\" @click.outside=\"open0 = false\">\n";
+            $output .= "\n$indent<div class=\"mega-menu absolute min-w-[60vw] bg-white shadow-xl border-t border-gray-200 z-[112]\" style=\"margin-left: calc(-50vw + 50%);\" x-show=\"open0\" x-cloak x-transition:enter=\"transition ease-out duration-300\" x-transition:enter-start=\"opacity-0 transform translate-y-[-10px]\" x-transition:enter-end=\"opacity-100 transform translate-y-0\" x-transition:leave=\"transition ease-in duration-200\" x-transition:leave-start=\"opacity-100 transform translate-y-0\" x-transition:leave-end=\"opacity-0 transform translate-y-[-10px]\" @click.outside=\"open0 = false\">\n";
             $output .= "$indent\t<div class=\"mega-menu-container max-w-7xl mx-auto px-6 py-8\">\n";
             $output .= "$indent\t\t<div class=\"flex flex-row-reverse gap-8\">\n";
             if (!empty($this->current_menu_images)) {
