@@ -85,7 +85,7 @@ class ProductCompare
             setcookie('compare_products', json_encode($compare_ids), time() + (86400 * 30), '/');
             $compare_ids = isset($_COOKIE['compare_products']) ? json_decode(stripslashes($_COOKIE['compare_products']), true) : [];
         }
-        $view = new \proteam\Cafedentist\View();
+        $view = new \jamal13647850\wphelpers\Views\View();
         $view->display("@views/components/compare/compare-button.twig", [
             'ajax_url' => admin_url('admin-ajax.php'),
             'product_id' => $product_id,
@@ -103,7 +103,7 @@ class ProductCompare
         setcookie('compare_products', json_encode($compare_ids), time() + (86400 * 30), '/');
 
 
-        $view = new \proteam\Cafedentist\View();
+        $view = new \jamal13647850\wphelpers\Views\View();
         $products = $this->get_compare_products($compare_ids);
         $view->display("@views/components/compare/compare.twig", [
             'products' => $products,

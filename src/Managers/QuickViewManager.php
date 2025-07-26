@@ -47,7 +47,7 @@ class QuickViewManager
             'quick_view_nonce' => wp_create_nonce('wc_quick_view_' . $product_id),
         ];
 
-        $view = new \proteam\Cafedentist\View();
+        $view = new \jamal13647850\wphelpers\Views\View();
         $view->display("@views/components/quickview/quickViewModal.twig", $data);
       
 

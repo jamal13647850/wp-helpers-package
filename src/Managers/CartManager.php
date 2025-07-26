@@ -25,7 +25,7 @@ class CartManager
 
     public function handle_add_to_cart_ajax()
     {
-        $view = new \proteam\Cafedentist\View();
+        $view = new \jamal13647850\wphelpers\Views\View();
         $product_id = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
 
         // چک کردن نانس

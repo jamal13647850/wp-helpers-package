@@ -214,7 +214,7 @@ class WishlistManager
 
     public function handle_toggle_wishlist()
     {
-        $view = new \proteam\Cafedentist\View();
+        $view = new \jamal13647850\wphelpers\Views\View();
         check_ajax_referer('wishlist-nonce', 'security');
 
         $product_id = isset($_POST['product_id']) ? (int) $_POST['product_id'] : 0;
@@ -258,7 +258,7 @@ class WishlistManager
 
     public function handle_remove_from_wishlist()
     {
-        $view = new \proteam\Cafedentist\View();
+        $view = new \jamal13647850\wphelpers\Views\View();
 
 
 
