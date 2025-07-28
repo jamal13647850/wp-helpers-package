@@ -14,12 +14,11 @@ defined('ABSPATH') || exit();
  * Now with customizable options for styling.
  *
  * @author Sayyed Jamal Ghasemi
- * @version 1.6.1 // Incremented version due to fix
+ * @version 1.7.0
  */
 class AlpineNavWalker extends \Walker_Nav_Menu {
     private array $mega_menu_items = [];
-    // MODIFIED LINE: Changed type from ?object to ?array
-    private ?array $current_parent = null; // Property to hold a reference to the current depth 1 mega menu item (which is an array)
+    private ?array $current_parent = null;
     private string $menu_type = 'desktop';
     private array $current_menu_images = [];
     private array $options = [];
@@ -42,12 +41,15 @@ class AlpineNavWalker extends \Walker_Nav_Menu {
         'submenu_link_class'            => 'block py-2 px-4 text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors',
         'mega_menu_parent_title_class'  => 'hover:text-primary transition-colors duration-300',
         'mega_menu_child_link_class'    => 'text-gray-700 hover:text-primary transition-colors duration-300 block py-1 text-sm hover:bg-gray-50 px-2 rounded',
+        'dropdown_root_link_class'      => 'block text-[#333] text-[16px] font-medium transition-colors duration-300 px-[22px] pt-[18px] pb-4 border-b-2 border-transparent hover:text-[#d32f2f] hover:border-[#d32f2f]',
+        'dropdown_child_link_class'     => 'relative block pr-[36px] pl-6 py-3 text-[#333] text-[15px] whitespace-nowrap transition-all duration-300 hover:bg-[#f5f5f5] hover:text-[#d32f2f] font-normal',
+        'dropdown_subchild_link_class'  => 'block px-6 py-3 text-[15px] text-[#333] transition-colors duration-300 hover:text-[#d32f2f] whitespace-nowrap',
     ];
 
     /**
      * Constructor to set menu type and custom options.
      *
-     * @param string $type    Menu type: 'desktop', 'mobile', or 'simple'.
+     * @param string $type    Menu type: 'desktop', 'mobile', 'simple', or 'dropdown'.
      * @param array  $options Optional. An array of options to override default styling and behavior.
      */
     public function __construct(string $type = 'desktop', array $options = []) {
@@ -66,8 +68,6 @@ class AlpineNavWalker extends \Walker_Nav_Menu {
         if (empty($elements[$id])) {
             return false;
         }
-        // Check if the 'children' property exists and is not empty.
-        // WordPress populates this property during the walk_nav_menu_tree call.
         return !empty($elements[$id]->children);
     }
 
@@ -86,6 +86,10 @@ class AlpineNavWalker extends \Walker_Nav_Menu {
             $this->render_simple_menu_item($output, $item, $depth, $args, $id);
             return;
         }
+        if ($this->menu_type === 'dropdown') {
+            $this->render_dropdown_menu_item($output, $item, $depth, $args, $id);
+            return;
+        }
 
         if ($this->menu_type === 'mobile' && $depth > 1) {
             return;
@@ -98,6 +102,63 @@ class AlpineNavWalker extends \Walker_Nav_Menu {
 
         $this->render_menu_item($output, $item, $depth, $args, $id);
     }
+    private function render_dropdown_menu_item(&$output, $item, $depth, $args, $id): void {
+        $indent = ($depth) ? str_repeat("\t", $depth) : '';
+        $classes = empty($item->classes) ? [] : (array) $item->classes;
+        $classes[] = 'menu-item-' . $item->ID;
+        $has_children = in_array('menu-item-has-children', $classes);
+
+        $class_names = join(' ', apply_filters('nav_menu_css_class', array_filter($classes), $item, $args, $depth));
+        $class_names = $class_names ? ' class="' . esc_attr($class_names) . '"' : '';
+
+        $id_attr = apply_filters('nav_menu_item_id', 'menu-item-' . $item->ID, $item, $args, $depth);
+        $id_attr = $id_attr ? ' id="' . esc_attr($id_attr) . '"' : '';
+
+        $li_attributes = '';
+        if ($has_children) {
+            $li_attributes = ' class="relative" @mouseenter="openDropdown = ' . $item->ID . '" @mouseleave="openDropdown = null"';
+            if ($depth > 0) { // Sub-menu item
+                $li_attributes = ' class="relative" @mouseenter="openSubmenu = ' . $item->ID . '" @mouseleave="openSubmenu = null"';
+            }
+        }
+
+        $output .= $indent . '<li' . $id_attr . $class_names . $li_attributes . '>';
+
+        $atts = [];
+        $atts['href']   = !empty($item->url) ? $item->url : '#';
+        $atts['target'] = !empty($item->target) ? $item->target : '';
+        $atts['rel']    = !empty($item->xfn) ? $item->xfn : '';
+        $atts['title']  = !empty($item->attr_title) ? $item->attr_title : '';
+
+        $link_class = '';
+        if ($depth === 0) {
+            $link_class = $this->options['dropdown_root_link_class'];
+        } elseif ($depth === 1) {
+            $link_class = $this->options['dropdown_child_link_class'];
+        } else {
+            $link_class = $this->options['dropdown_subchild_link_class'];
+        }
+        $atts['class'] = $link_class;
+        $attributes = '';
+        foreach ($atts as $attr => $value) {
+            if (!empty($value)) {
+                $value = ('href' === $attr) ? esc_url($value) : esc_attr($value);
+                $attributes .= ' ' . $attr . '="' . $value . '"';
+            }
+        }
+        $item_output = ($args->before ?? '') . '<a' . $attributes . '>';
+        $item_output .= ($args->link_before ?? '') . apply_filters('the_title', $item->title, $item->ID) . ($args->link_after ?? '');
+        if ($has_children) {
+            if ($depth === 0) {
+                $item_output .= ' <span class="inline-block align-middle ml-1 text-[12px]">▾</span>';
+            } else {
+                $item_output .= ' <span class="absolute left-5 top-1/2 -translate-y-1/2 text-[16px] font-bold">‹</span>';
+            }
+        }
+        $item_output .= '</a>' . ($args->after ?? '');
+        $output .= apply_filters('walker_nav_menu_start_el', $item_output, $item, $depth, $args);
+    }
+
 
     /**
      * Render simple menu item (e.g., for top bar or footer).
@@ -155,21 +216,18 @@ class AlpineNavWalker extends \Walker_Nav_Menu {
      * @param int    $depth Depth of menu item.
      */
     private function collect_mega_menu_items($item, $depth): void {
-        if ($depth === 1) { // This is a top-level item in the mega menu (column header)
+        if ($depth === 1) { 
             $this->mega_menu_items[] = [
                 'title'    => apply_filters('the_title', $item->title, $item->ID),
                 'url'      => $item->url,
-                'ID'       => $item->ID, // Store ID for potential use
+                'ID'       => $item->ID,
                 'target'   => $item->target,
                 'attr_title' => $item->attr_title,
                 'xfn'      => $item->xfn,
-                'children' => [], // Initialize children array
+                'children' => [], 
             ];
-            // Set current_parent to the last added mega_menu_item by reference
-            // This now correctly assigns an array to a property typed as ?array
             $this->current_parent = &$this->mega_menu_items[count($this->mega_menu_items) - 1];
-        } elseif ($depth === 2 && $this->current_parent !== null) { // This is a child of a mega menu column header
-            // $this->current_parent is an array, so array access is correct.
+        } elseif ($depth === 2 && $this->current_parent !== null) { 
             $this->current_parent['children'][] = [
                 'title'    => apply_filters('the_title', $item->title, $item->ID),
                 'url'      => $item->url,
@@ -281,8 +339,19 @@ class AlpineNavWalker extends \Walker_Nav_Menu {
         if ($this->menu_type === 'simple') {
             return;
         }
-
         $indent = str_repeat("\t", $depth + 1);
+        if ($this->menu_type === 'dropdown') {
+            $ul_classes = "absolute top-full right-0 min-w-[250px] bg-white border border-[#e0e0e0] border-t-0 rounded-b-xl shadow-lg z-50 py-2 mt-1 list-none";
+            $x_show = "openDropdown === " . $args->menu->items[$this->current_item_ID]->ID;
+    
+            if ($depth > 0) { // Sub-menu
+                $ul_classes = "absolute top-[-1px] right-full min-w-[250px] bg-white border border-[#e0e0e0] rounded-xl shadow-lg z-50 py-2 list-none";
+                $x_show = "openSubmenu === " . $args->menu->items[$this->current_item_ID]->ID;
+            }
+    
+            $output .= "\n$indent<ul class=\"$ul_classes\" x-show=\"$x_show\" x-transition style=\"display:none\" x-cloak>\n";
+            return;
+        }
 
         if ($depth === 0 && $this->menu_type === 'desktop') {
             $output .= "\n$indent<div class=\"mega-menu absolute min-w-[60vw] bg-white shadow-xl border-t border-gray-200 z-[112]\" style=\"margin-left: calc(-50vw + 50%);\" x-show=\"open0\" x-cloak x-transition:enter=\"transition ease-out duration-300\" x-transition:enter-start=\"opacity-0 transform translate-y-[-10px]\" x-transition:enter-end=\"opacity-100 transform translate-y-0\" x-transition:leave=\"transition ease-in duration-200\" x-transition:leave-start=\"opacity-100 transform translate-y-0\" x-transition:leave-end=\"opacity-0 transform translate-y-[-10px]\" @click.outside=\"open0 = false\">\n";
@@ -322,6 +391,10 @@ class AlpineNavWalker extends \Walker_Nav_Menu {
         }
 
         $indent = str_repeat("\t", $depth + 1);
+        if ($this->menu_type === 'dropdown') {
+            $output .= "$indent</ul>\n";
+            return;
+        }
 
         if ($depth === 0 && $this->menu_type === 'desktop') {
             foreach ($this->mega_menu_items as $mega_item) {
@@ -362,11 +435,11 @@ class AlpineNavWalker extends \Walker_Nav_Menu {
                 $output .= "$indent\t\t\t\t\t</div>\n";
             }
 
-            $output .= "$indent\t\t\t\t</div>\n"; // Close grid
-            $output .= "$indent\t\t\t</div>\n";   // Close mega-menu-content
-            $output .= "$indent\t\t</div>\n";       // Close flex container (row-reverse)
-            $output .= "$indent\t</div>\n";           // Close mega-menu-container
-            $output .= "$indent</div>\n";               // Close mega-menu (main div)
+            $output .= "$indent\t\t\t\t</div>\n"; 
+            $output .= "$indent\t\t\t</div>\n";  
+            $output .= "$indent\t\t</div>\n";      
+            $output .= "$indent\t</div>\n";          
+            $output .= "$indent</div>\n";              
 
             $this->mega_menu_items = [];
             $this->current_parent = null;
@@ -386,7 +459,7 @@ class AlpineNavWalker extends \Walker_Nav_Menu {
      * @param array  $args   An array of arguments. Not Used.
      */
     function end_el(&$output, $item, $depth = 0, $args = array()): void {
-        if ($this->menu_type === 'simple') {
+        if ($this->menu_type === 'simple' || $this->menu_type === 'dropdown') {
             $output .= "</li>\n";
             return;
         }
