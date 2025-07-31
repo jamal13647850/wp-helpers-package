@@ -77,7 +77,7 @@ class AlpineNavWalker extends \Walker_Nav_Menu
         'desktop_svg_hover_fill'        => '#F25A04',
         'mobile_link_class'             => 'flex-1 py-3 text-secondary hover:text-primary transition-colors text-sm sm:text-base',
         'mobile_link_no_children_class' => 'block py-3 text-secondary hover:text-primary transition-colors text-sm sm:text-base',
-        'mobile_button_class'           => 'p-2 text-gray-600 hover:text-primary transition-colors',
+        'mobile_button_class'           => 'p-2 text-dark hover:text-primary transition-colors',
         'mobile_svg_default_fill'       => '#79528A',
         'submenu_link_class'            => 'block py-2 px-4 text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors',
         'mega_menu_parent_title_class'  => 'hover:text-primary transition-colors duration-300',
@@ -201,7 +201,7 @@ class AlpineNavWalker extends \Walker_Nav_Menu
                 // Alpine.js: rotates icon on hover
                 $item_output .= " <span
   class=\"flex flex-col justify-center align-middle ml-1 text-[12px] transition-all duration-200 ease-out\"
-  :class=\"open ? '-rotate-90 text-red-500' : 'text-gray-600'\"
+  :class=\"open ? '-rotate-90 text-secondary-hover' : 'text-dark'\"
   aria-hidden=\"true\"
 >
   <svg
@@ -217,7 +217,7 @@ class AlpineNavWalker extends \Walker_Nav_Menu
   </svg>
 </span>";
             } else {
-                $item_output .= ' <span :class="open ? \'text-red-500\' : \'text-gray-600\'" class="flex flex-col justify-center left-5 top-1/2 text-[16px] font-bold"><svg width="12px" height="12px" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17 9H5.414l3.293-3.293a.999.999 0 10-1.414-1.414l-5 5a.999.999 0 000 1.414l5 5a.997.997 0 001.414 0 .999.999 0 000-1.414L5.414 11H17a1 1 0 100-2z" fill="currentColor"/></svg></span>';
+                $item_output .= ' <span :class="open ? \'text-secondary-hover\' : \'text-dark\'" class="flex flex-col justify-center left-5 top-1/2 text-[16px] font-bold"><svg width="12px" height="12px" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17 9H5.414l3.293-3.293a.999.999 0 10-1.414-1.414l-5 5a.999.999 0 000 1.414l5 5a.997.997 0 001.414 0 .999.999 0 000-1.414L5.414 11H17a1 1 0 100-2z" fill="currentColor"/></svg></span>';
             }
         }
         $item_output .= '</a>' . ($args->after ?? '');
