@@ -13,7 +13,7 @@ namespace jamal13647850\wphelpers\Components\Slider;
 
 use jamal13647850\wphelpers\Views\View;
 use jamal13647850\wphelpers\Components\Slider\Options\SliderOptions;
-use jamal13647850\wphelpers\Components\Slider\AssetManager;
+use jamal13647850\wphelpers\Assets\AssetManager;
 
 /**
  * AbstractSlider
@@ -150,6 +150,25 @@ abstract class AbstractSlider
     protected function makeOptions(array $incoming): SliderOptions
     {
         return new SliderOptions($incoming, static::defaultOptions());
+    }
+
+
+
+    protected function sanitizeSlides(array $slides): array
+    {
+        return array_map(static function (array $s): array {
+            return [
+                'image'         => esc_url_raw($s['image'] ?? ''),
+                'alt'           => sanitize_text_field($s['alt'] ?? ''),
+                'title'         => sanitize_text_field($s['title'] ?? ''),
+                'subtitle'      => sanitize_text_field($s['subtitle'] ?? ''),
+                'button_text'   => sanitize_text_field($s['button_text'] ?? ''),
+                'button_link'   => esc_url_raw($s['button_link'] ?? ''),
+                'text_position' => in_array($s['text_position'] ?? 'right', ['left','center','right'], true)
+                                    ? $s['text_position']
+                                    : 'right',
+            ];
+        }, $slides);
     }
 }
 

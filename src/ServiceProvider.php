@@ -13,7 +13,7 @@ Sayyed Jamal Ghasemi — Full-Stack Developer
  * Package Bootstrap – wp-helpers
  * -------------------------------------------------
  * Registers all core services, Twig helpers, assets,
- * and slider variants on WordPress startup.
+ * and slider/menu variants on WordPress startup.
  *
  * @author  Sayyed Jamal Ghasemi
  * @link    https://jamalghasemi.com
@@ -26,14 +26,21 @@ namespace jamal13647850\wphelpers;
 use jamal13647850\wphelpers\Views\View;
 use jamal13647850\wphelpers\Components\Slider\SliderManager;
 use jamal13647850\wphelpers\Components\Slider\Variants\WideAuto\WideAuto;
+use jamal13647850\wphelpers\Components\Menu\MenuManager;
+use jamal13647850\wphelpers\Components\Menu\Variants\MobileMenu;
+use jamal13647850\wphelpers\Components\Menu\Variants\SimpleMenu;
+use jamal13647850\wphelpers\Components\Menu\Variants\DropdownMenu;
+use jamal13647850\wphelpers\Components\Menu\Variants\DesktopMenu;
 
 defined('ABSPATH') || exit();
 
 /**
  * ServiceProvider
  *
- * Handles the registration and bootstrapping of core services,
- * slider variants, Twig helpers, and shared front-end assets for wp-helpers.
+ * Handles registration and bootstrapping of all wp-helpers services:
+ * - Registers all slider and menu variants
+ * - Adds global Twig helpers
+ * - Enqueues shared assets (JS/CSS)
  *
  * Usage:
  *   ServiceProvider::boot();
@@ -41,7 +48,7 @@ defined('ABSPATH') || exit();
 final class ServiceProvider
 {
     /**
-     * Singleton boot flag to ensure bootstrapping occurs only once.
+     * Singleton boot flag to ensure bootstrapping occurs only once per request.
      *
      * @var bool
      */
@@ -50,9 +57,9 @@ final class ServiceProvider
     /**
      * Boot the package and register all core services and hooks.
      *
-     * - Registers slider variants.
-     * - Adds global Twig helpers after the theme setup.
-     * - Enqueues shared JavaScript and CSS assets.
+     * - Registers slider and menu variants
+     * - Adds global Twig helpers after the theme setup
+     * - Enqueues shared JavaScript and CSS assets
      *
      * @return void
      */
@@ -63,20 +70,20 @@ final class ServiceProvider
         }
         self::$booted = true;
 
-        /** -------------------------------------------------
-         * 1) Register Slider Variants
-         * ------------------------------------------------- */
+        // 1) Register Slider Variants
         SliderManager::register('wide-auto', WideAuto::class);
 
-        /** -------------------------------------------------
-         * 2) Register global Twig helpers after theme setup
-         * ------------------------------------------------- */
+        // 2) Register global Twig helpers after theme setup
         add_action('after_setup_theme', [self::class, 'registerTwigHelpers']);
 
-        /** -------------------------------------------------
-         * 3) Enqueue shared front-end assets
-         * ------------------------------------------------- */
+        // 3) Enqueue shared front-end assets (JS/CSS)
         add_action('wp_enqueue_scripts', [self::class, 'enqueueAssets']);
+
+        // 4) Register all Menu Variants
+        MenuManager::register('mobile',   MobileMenu::class);
+        MenuManager::register('simple',   SimpleMenu::class);
+        MenuManager::register('dropdown', DropdownMenu::class);
+        MenuManager::register('desktop',  DesktopMenu::class);
     }
 
     /**
@@ -93,26 +100,25 @@ final class ServiceProvider
      */
     public static function registerTwigHelpers(): void
     {
-        $view = new View(); // uses internal DI / singleton pattern
+        $view = new View(); // Uses internal DI / singleton
         $view->registerFunction('slider', static function (
-    string $variantKey,
-    array  $slides  = [],
-    array  $options = []
-) {
-    return \jamal13647850\wphelpers\Components\Slider\SliderManager::render(
-        $variantKey,
-        $slides,
-        $options
-    );
-});
-
+            string $variantKey,
+            array $slides = [],
+            array $options = []
+        ) {
+            return \jamal13647850\wphelpers\Components\Slider\SliderManager::render(
+                $variantKey,
+                $slides,
+                $options
+            );
+        });
     }
 
     /**
      * Register and enqueue shared JS & CSS assets.
      *
      * For example, registers Alpine.js (if not already registered),
-     * and enqueues it for use in all sliders.
+     * and enqueues it for use in all sliders and menus.
      *
      * @return void
      */
@@ -136,3 +142,4 @@ final class ServiceProvider
  * Boot the package (can be called with require_once + autoload)
  * ---------------------------------------------------- */
 ServiceProvider::boot();
+
