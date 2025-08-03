@@ -30,6 +30,9 @@ use jamal13647850\wphelpers\Components\Slider\AssetManager;
  */
 abstract class AbstractSlider
 {
+
+    protected const TWIG_PREFIX = '@slider_';
+
     /**
      * The Twig template namespace that must be defined by concrete child classes.
      * Each slider variant must provide its own namespace.
@@ -54,7 +57,17 @@ abstract class AbstractSlider
     public function __construct()
     {
         $this->view = new View();
+
+        /* ---------- VALIDATE NAMESPACE PREFIX ---------- */
+        if (! str_starts_with(static::TEMPLATE_NAMESPACE, self::TWIG_PREFIX)) {
+            throw new \RuntimeException(
+                static::class . ' must define TEMPLATE_NAMESPACE starting with "' .
+                self::TWIG_PREFIX . '"'
+            );
+        }
+
         // Each variant registers its own Twig template namespace and path.
+        
         $this->view->addPath(
             static::TEMPLATE_NAMESPACE,
             static::getViewsPath()

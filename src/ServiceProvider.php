@@ -95,12 +95,17 @@ final class ServiceProvider
     {
         $view = new View(); // uses internal DI / singleton pattern
         $view->registerFunction('slider', static function (
-            string $variantKey,
-            array $slides = [],
-            array $options = []
-        ) {
-            return SliderManager::make($variantKey)->render($slides, $options);
-        });
+    string $variantKey,
+    array  $slides  = [],
+    array  $options = []
+) {
+    return \jamal13647850\wphelpers\Components\Slider\SliderManager::render(
+        $variantKey,
+        $slides,
+        $options
+    );
+});
+
     }
 
     /**
