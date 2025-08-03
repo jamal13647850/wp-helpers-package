@@ -62,6 +62,33 @@ final class WideAuto extends AbstractSlider
         ];
     }
 
+
+
+      protected static function assets(): array
+    {
+        $baseUri = get_stylesheet_directory_uri() . '/assets/slider/wide-auto';
+
+        return [
+            'styles' => [
+                [
+                    'handle' => 'slider-wide-auto',
+                    'src'    => $baseUri . '.css',
+                    'deps'   => [],
+                    'ver'    => '1.0.0',
+                ],
+            ],
+            'scripts' => [
+                [
+                    'handle' => 'slider-wide-auto',
+                    'src'    => $baseUri . '.js',
+                    'deps'   => ['alpinejs'],
+                    'ver'    => '1.0.0',
+                    'footer' => true,
+                ],
+            ],
+        ];
+    }
+
     /**
      * Render the WideAuto slider as HTML.
      *
@@ -81,6 +108,8 @@ final class WideAuto extends AbstractSlider
 
         // Sanitize the slides array before rendering
         $slides = $this->sanitizeSlides($slides);
+
+        $this->enqueueAssets(); 
 
         // Compose Tailwind CSS class for max-height based on option value
         $heightClass = 'max-h-[' . (int) $optionsVO->get('height') . 'px]';

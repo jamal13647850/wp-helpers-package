@@ -13,6 +13,7 @@ namespace jamal13647850\wphelpers\Components\Slider;
 
 use jamal13647850\wphelpers\Views\View;
 use jamal13647850\wphelpers\Components\Slider\Options\SliderOptions;
+use jamal13647850\wphelpers\Components\Slider\AssetManager;
 
 /**
  * AbstractSlider
@@ -92,6 +93,37 @@ abstract class AbstractSlider
      * @return array The default options for the slider.
      */
     abstract protected static function defaultOptions(): array;
+
+    /** Variant may override to declare its assets */
+    protected static function assets(): array
+    {
+        return [
+            'styles'  => [], // [['handle'=>..., 'src'=>..., 'deps'=>[], 'ver'=>null, 'media'=>'all']]
+            'scripts' => [], // [['handle'=>..., 'src'=>..., 'deps'=>[], 'ver'=>null, 'footer'=>true]]
+        ];
+    }
+
+    protected function enqueueAssets(): void
+    {
+        foreach (static::assets()['styles'] as $style) {
+            AssetManager::style(
+                $style['handle'],
+                $style['src'],
+                $style['deps']  ?? [],
+                $style['ver']   ?? null,
+                $style['media'] ?? 'all'
+            );
+        }
+        foreach (static::assets()['scripts'] as $script) {
+            AssetManager::script(
+                $script['handle'],
+                $script['src'],
+                $script['deps']   ?? [],
+                $script['ver']    ?? null,
+                $script['footer'] ?? true
+            );
+        }
+    }
 
     /**
      * Create and return a SliderOptions value object, merging incoming options
