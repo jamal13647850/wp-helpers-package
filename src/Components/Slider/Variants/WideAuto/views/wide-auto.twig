@@ -1,0 +1,103 @@
+{#
+ /**
+  * Component: WideAutoSlider
+  * Developed by: Sayyed Jamal Ghasemi (Full Stack Developer)
+  * Email: info@jamalghasemi.com
+  * LinkedIn: https://www.linkedin.com/in/jamal1364/
+  * Website: https://jamalghasemi.com
+  * Description: Full-width, auto-playing slider (max-height 530 px) with dots nav.
+  */
+#}
+
+{% macro dot(index, current) %}
+  <button
+    type="button"
+    :class="{'bg-primary': index === current, 'bg-gray-300': index !== current}"
+    class="w-3 h-3 rounded-full transition-colors duration-300 focus:outline-none"
+    @click="goTo(index)"
+    :aria-label="`اسلاید ${index + 1}`"
+  ></button>
+{% endmacro %}
+
+{% set slides = slides|default([]) %}
+<section
+  x-data="slider({{ slides|length }})"
+  x-init="init()"
+  role="region"
+  aria-roledescription="carousel"
+  aria-label="اسلایدر اصلی سایت"
+  class="relative w-full {{ heightClass }} overflow-hidden"
+>
+  {# Slides #}
+  <template x-for="(slide, idx) in slides" :key="idx">
+    <div
+      x-show="idx === current"
+      x-transition:enter="opacity-0"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="opacity-100"
+      x-transition:leave-end="opacity-0"
+      class="absolute inset-0 w-full h-full"
+    >
+      <img
+        :src="slide.image"
+        :alt="slide.alt || `اسلاید ${idx + 1}`"
+        class="object-cover w-full h-full"
+        loading="lazy"
+        decoding="async"
+      />
+      <div
+        x-show="slide.title || slide.subtitle || slide.button_text"
+        class="absolute inset-0 flex flex-col justify-center px-6 lg:px-20"
+        :class="{
+          'items-start text-left': slide.text_position === 'left',
+          'items-center text-center': slide.text_position === 'center',
+          'items-end text-right': slide.text_position === 'right'
+        }"
+      >
+        <h2 class="text-3xl lg:text-5xl font-bold text-white drop-shadow">{{ slide.title }}</h2>
+        <p class="mt-2 text-lg lg:text-2xl text-white/90 drop-shadow">{{ slide.subtitle }}</p>
+        <template x-if="slide.button_text && slide.button_link">
+          <a
+            :href="slide.button_link"
+            class="mt-4 inline-flex items-center px-6 py-3 rounded-lg bg-primary text-white font-medium shadow-lg hover:bg-primary/90 transition"
+          >{{ slide.button_text }}</a>
+        </template>
+      </div>
+    </div>
+  </template>
+
+  
+  {# --- Dots Navigation --- #}
+    <div class="absolute bottom-4 w-full flex justify-center gap-2">
+    <template x-for="i in total" :key="i">
+        <button
+        type="button"
+        class="w-3 h-3 rounded-full transition-colors duration-300 focus:outline-none"
+        :class="(i - 1) === current ? 'bg-primary' : 'bg-gray-300'"
+        @click="goTo(i - 1)"
+        :aria-label="`اسلاید ${i}`"
+        ></button>
+    </template>
+    </div>
+
+
+  {# Alpine Component Definition #}
+  <script>
+window.slider = function (total) {
+    return {
+        slides: {{ slides|json_encode|raw }},
+        total,
+        current: 0,
+        timer: null,
+        interval: {{ interval|default(5000) }},
+        init() { this.start() },
+        start() { this.timer = setInterval(() => this.next(), this.interval) },
+        stop()  { clearInterval(this.timer) },
+        next()  { this.current = (this.current + 1) % this.total },
+        goTo(i) { this.current = i; this.stop(); this.start() },
+    }
+}
+</script>
+
+</section>
