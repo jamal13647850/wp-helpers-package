@@ -418,7 +418,7 @@ class AlpineNavWalker extends \Walker_Nav_Menu
 
         // Hybrid accordion (mobile): Show submenu based on Alpine.js state.
         if ($this->menu_type === 'mobile' && $depth < 3) {
-            $padding_class = 'pl-' . (4 * ($depth + 1));
+            $padding_class = 'pr-' . (2 * ($depth + 1));
             if ($depth === 0) {
                 $show_condition = sprintf("activeMenu === %d", $this->current_mobile_item_id);
             } else {

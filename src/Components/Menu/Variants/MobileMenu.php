@@ -75,13 +75,15 @@ final class MobileMenu extends AbstractMenu
         $args['walker'] = $this->makeWalker('mobile', $walkerOptions);
 
         // Compose the items_wrap with Persian aria-label (already translated)
-        $args['items_wrap'] = sprintf(
-            $opts->get('items_wrap'),
-            esc_attr__($opts->get('aria_label'), 'your-theme-textdomain')
+        $aria_label = esc_attr__(
+            $opts->get('aria_label'),
+            'your-theme-textdomain'
         );
 
+        // Option A – plain concatenation (simplest, recommended)
+        $args['items_wrap'] =
+            '<ul  x-data="{ activeMenu: null }" aria-label="' . $aria_label . '" id="%1$s" class="%2$s">%3$s</ul>';
         /** @psalm-suppress UndefinedFunction */
         return (string) wp_nav_menu($args);
     }
 }
-

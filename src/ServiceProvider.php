@@ -31,6 +31,7 @@ use jamal13647850\wphelpers\Components\Menu\Variants\MobileMenu;
 use jamal13647850\wphelpers\Components\Menu\Variants\SimpleMenu;
 use jamal13647850\wphelpers\Components\Menu\Variants\DropdownMenu;
 use jamal13647850\wphelpers\Components\Menu\Variants\DesktopMenu;
+use jamal13647850\wphelpers\Utilities\Clear_Theme_Cache;
 
 defined('ABSPATH') || exit();
 
@@ -69,6 +70,10 @@ final class ServiceProvider
             return;
         }
         self::$booted = true;
+
+        $theme_settings_acf = new \jamal13647850\wphelpers\Utilities\Theme_Settings_ACF();
+	
+	    new Clear_Theme_Cache();
 
         // 1) Register Slider Variants
         SliderManager::register('wide-auto', WideAuto::class);
