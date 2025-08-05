@@ -62,7 +62,7 @@ class Theme_Settings_Cache
     /**
      * کش‌گذاری گروهی
      */
-    public function set($group, $data, $expiration = 3600)
+    public function set($group, $data, $expiration = 604800)
     {
         if ($this->bypass) return false;
         return $this->driver->set('group_' . $group, $data, $expiration);

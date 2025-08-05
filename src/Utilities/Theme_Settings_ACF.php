@@ -434,7 +434,7 @@ class Theme_Settings_ACF
                     }
                 }
                 if ($this->cache) {
-                    $this->cache->set($cache_key, $result, 3600);
+                    $this->cache->set($cache_key, $result, 604800);
                 }
             }
             return $result;
@@ -459,7 +459,7 @@ class Theme_Settings_ACF
                         : null;
                 }
             }
-            $this->cache->set($cache_key, $all, 3600);
+            $this->cache->set($cache_key, $all, 604800);
             if (isset($all[$field])) {
                 return $all[$field];
             }

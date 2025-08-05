@@ -89,6 +89,16 @@ final class ServiceProvider
         MenuManager::register('simple',   SimpleMenu::class);
         MenuManager::register('dropdown', DropdownMenu::class);
         MenuManager::register('desktop',  DesktopMenu::class);
+
+        add_action('wp_update_nav_menu',         [MenuCacheManager::getInstance(), 'purgeAll'], 99);
+        add_action('wp_delete_nav_menu',         [MenuCacheManager::getInstance(), 'purgeAll'], 99);
+        add_action('wp_nav_menu_item_updated',   [MenuCacheManager::getInstance(), 'purgeAll'], 99, 3);
+        add_action('customize_save_after',       [MenuCacheManager::getInstance(), 'purgeAll'], 99);
+        add_action('acf/save_post', function ($post_id) {
+            if ($post_id === 'options') {
+                MenuCacheManager::getInstance()->purgeAll();
+            }
+        }, 99);
     }
 
     /**
