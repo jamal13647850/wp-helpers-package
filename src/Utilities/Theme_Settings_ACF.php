@@ -1,5 +1,14 @@
 <?php
 
+/*
+Sayyed Jamal Ghasemi — Full-Stack Developer
+📧 info@jamalghasemi.com
+🔗 LinkedIn: https://www.linkedin.com/in/jamal1364/
+📸 Instagram: https://www.instagram.com/jamal13647850
+💬 Telegram: https://t.me/jamal13647850
+🌐 https://jamalghasemi.com
+*/
+
 namespace jamal13647850\wphelpers\Utilities;
 
 use jamal13647850\wphelpers\Utilities\Theme_Settings_Cache;
@@ -8,14 +17,34 @@ use jamal13647850\wphelpers\Language\LanguageManager;
 defined('ABSPATH') || exit;
 
 /**
- * Theme_Settings_ACF
- * Full ACF option page/group handler with multilingual support using LanguageManager
+ * Class Theme_Settings_ACF
+ *
+ * Handles all ACF theme settings options with full multilingual support using LanguageManager.
+ *
+ * - Registers options pages and subpages
+ * - Loads field group definitions from a config file
+ * - Handles field translation via LanguageManager
+ * - Provides settings retrieval and cache management
  *
  * @package jamal13647850\wphelpers
+ * @author  Sayyed Jamal Ghasemi <info@jamalghasemi.com>
+ * @link    https://jamalghasemi.com
+ * @since   1.0.0
  */
 class Theme_Settings_ACF
 {
+    /**
+     * Theme prefix used for all options/groups.
+     *
+     * @var string
+     */
     private string $theme_prefix;
+
+    /**
+     * Default field prefixes per group.
+     *
+     * @var array
+     */
     private array $prefixes = [
         'general'  => 'general_',
         'header'   => 'header_',
@@ -28,11 +57,46 @@ class Theme_Settings_ACF
         'social'   => 'social_',
         'scripts'  => 'scripts_',
     ];
+
+    /**
+     * Loaded field group configurations.
+     *
+     * @var array
+     */
     private array $groups = [];
+
+    /**
+     * Path to configuration file.
+     *
+     * @var string|null
+     */
     private ?string $config_path = null;
+
+    /**
+     * Cache handler instance.
+     *
+     * @var Theme_Settings_Cache|null
+     */
     private ?Theme_Settings_Cache $cache = null;
+
+    /**
+     * LanguageManager instance for translations.
+     *
+     * @var LanguageManager
+     */
     private LanguageManager $lang;
 
+    /**
+     * Theme_Settings_ACF constructor.
+     *
+     * Initializes theme prefix, loads config, sets up cache, and registers hooks.
+     *
+     * @param string|null $theme_prefix Custom theme prefix (optional)
+     * @param string|null $config_path  Path to config file (optional)
+     *
+     * @example
+     *   $ts = new Theme_Settings_ACF('mytheme', '/my/path/to/config.php');
+     */
     public function __construct(?string $theme_prefix = null, ?string $config_path = null)
     {
         $stylesheet = function_exists('get_stylesheet') ? get_stylesheet() : 'defaulttheme';
@@ -50,6 +114,14 @@ class Theme_Settings_ACF
         add_action('acf/save_post', [$this, 'clearCacheOnSave']);
     }
 
+    /**
+     * Normalize a given prefix string.
+     *
+     * Ensures prefix is lowercase, only alphanumeric/underscores, and ends with "_".
+     *
+     * @param string $prefix
+     * @return string
+     */
     private function normalize_prefix(string $prefix): string
     {
         $prefix = strtolower($prefix);
@@ -58,7 +130,9 @@ class Theme_Settings_ACF
     }
 
     /**
-     * Shows admin notice if ACF Pro plugin not active
+     * Display admin notice if ACF Pro is not installed/active.
+     *
+     * @return void
      */
     public function check_acf_pro_admin_notices(): void
     {
@@ -78,11 +152,17 @@ class Theme_Settings_ACF
     }
 
     /**
-     * Loads config from file only once
+     * Loads field group configuration from file, if not already loaded.
+     *
+     * Will only attempt to load once per request.
+     *
+     * @return void
      */
     public function load_config(): void
     {
-        if ($this->groups) return;
+        if ($this->groups) {
+            return;
+        }
         try {
             if (!file_exists($this->config_path)) {
                 throw new \Exception("Config file not found: {$this->config_path}");
@@ -98,7 +178,13 @@ class Theme_Settings_ACF
     }
 
     /**
-     * Option to change config path at runtime
+     * Change the config path at runtime and clear cached groups.
+     *
+     * @param string $path Absolute path to new config file.
+     * @return void
+     *
+     * @example
+     *   $ts->setConfigPath('/custom/path/config.php');
      */
     public function setConfigPath(string $path): void
     {
@@ -107,7 +193,11 @@ class Theme_Settings_ACF
     }
 
     /**
-     * Register ACF options main page & sub pages, using ONLY LanguageManager for labels
+     * Register ACF options main page and sub pages.
+     *
+     * All labels and titles are translated via LanguageManager.
+     *
+     * @return void
      */
     public function register_options_pages(): void
     {
@@ -138,7 +228,9 @@ class Theme_Settings_ACF
     }
 
     /**
-     * Register all ACF field groups/fields
+     * Register all ACF field groups/fields using config.
+     *
+     * @return void
      */
     public function register_field_groups(): void
     {
@@ -150,6 +242,13 @@ class Theme_Settings_ACF
         }
     }
 
+    /**
+     * Register a single ACF settings group as a field group.
+     *
+     * @param string $key   Group identifier.
+     * @param array  $group Group configuration.
+     * @return void
+     */
     private function register_settings_group(string $key, array $group): void
     {
         $prefix = $this->theme_prefix . ($this->prefixes[$key] ?? "{$key}_");
@@ -164,16 +263,23 @@ class Theme_Settings_ACF
                 'operator' => '==',
                 'value'    => $this->theme_prefix . $group['menu_slug'],
             ]]],
-            'menu_order'           => $group['menu_order'] ?? 0,
-            'position'             => 'acf_after_title',
-            'style'                => 'default',
-            'label_placement'      => 'top',
-            'instruction_placement'=> 'label',
+            'menu_order'            => $group['menu_order'] ?? 0,
+            'position'              => 'acf_after_title',
+            'style'                 => 'default',
+            'label_placement'       => 'top',
+            'instruction_placement' => 'label',
         ]);
     }
 
     /**
-     * Fully multilingual: only uses LanguageManager to translate labels/instructions/choices
+     * Prepare fields array for ACF, translating all labels/instructions/choices.
+     *
+     * Also applies prefixing and field capability/role checks.
+     * Recursively handles sub_fields for repeater/group/flexible_content types.
+     *
+     * @param array  $fields Field definitions array.
+     * @param string $prefix Field name prefix.
+     * @return array Prepared/translated fields.
      */
     private function prepareFields(array $fields, string $prefix): array
     {
@@ -181,9 +287,11 @@ class Theme_Settings_ACF
         $current_user = function_exists('wp_get_current_user') ? wp_get_current_user() : false;
 
         foreach ($fields as $field) {
+            // Capability restriction
             if (!empty($field['capability']) && !current_user_can($field['capability'])) {
                 continue;
             }
+            // Restrict by visible_for_roles, if set
             if (!empty($field['visible_for_roles']) && $current_user !== false) {
                 $allowed_roles = (array) $field['visible_for_roles'];
                 if (!array_intersect($allowed_roles, (array) $current_user->roles)) {
@@ -197,7 +305,7 @@ class Theme_Settings_ACF
                 $field_copy['name'] = $prefix . $field_copy['name'];
             }
 
-            // Translate possible labels/instructions/choices only via LanguageManager
+            // Translate label/instructions/choices
             if (isset($field_copy['label'])) {
                 $field_copy['label'] = $this->lang->trans($field_copy['label'], null, $field_copy['label']);
             }
@@ -209,9 +317,16 @@ class Theme_Settings_ACF
                     $field_copy['choices'][$choice_key] = $this->lang->trans($choice_val, null, $choice_val);
                 }
             }
+            // Prefix conditional logic fields
+            if (!empty($field_copy['conditional_logic'])) {
+                $field_copy['conditional_logic'] = $this->prefixConditionalLogicFields($field_copy['conditional_logic'], $prefix);
+            }
 
-            // Recursively apply for sub_fields/layouts
-            if (in_array($field_copy['type'], ['repeater', 'group', 'flexible_content'], true) && isset($field_copy['sub_fields'])) {
+            // Recursively handle sub_fields and layouts
+            if (
+                in_array($field_copy['type'], ['repeater', 'group', 'flexible_content'], true)
+                && isset($field_copy['sub_fields'])
+            ) {
                 $field_copy['sub_fields'] = $this->prepareFields($field_copy['sub_fields'], $field_copy['key'] . '_');
             }
             if ($field_copy['type'] === 'flexible_content' && isset($field_copy['layouts'])) {
@@ -229,7 +344,45 @@ class Theme_Settings_ACF
     }
 
     /**
-     * Clear cache on ACF save (per locale)
+     * Prefixes only the 'field' keys inside conditional_logic arrays.
+     *
+     * @param array  $conditionalLogic Array of conditional logic rules (ACF format)
+     * @param string $prefix           Prefix to apply to field keys
+     * @return array Updated conditional logic with prefixed field keys
+     *
+     * @example
+     *   $cond = [
+     *      [
+     *          ['field' => 'show_extra', 'operator' => '==', 'value' => '1'],
+     *      ]
+     *   ];
+     *   $prefixed = $this->prefixConditionalLogicFields($cond, 'mytheme_');
+     */
+    protected function prefixConditionalLogicFields(array $conditionalLogic, string $prefix): array
+    {
+        foreach ($conditionalLogic as &$group) {
+            if (is_array($group)) {
+                foreach ($group as &$rule) {
+                    if (
+                        is_array($rule)
+                        && isset($rule['field'])
+                        && strpos($rule['field'], $prefix) !== 0 // Prevent double-prefix
+                    ) {
+                        $rule['field'] = $prefix . $rule['field'];
+                    }
+                }
+            }
+        }
+        return $conditionalLogic;
+    }
+
+    /**
+     * Clears cache for all groups in current locale when an options page is saved.
+     *
+     * Should be hooked to 'acf/save_post'.
+     *
+     * @param string|int $post_id Saved post identifier
+     * @return void
      */
     public function clearCacheOnSave($post_id): void
     {
@@ -244,7 +397,17 @@ class Theme_Settings_ACF
     }
 
     /**
-     * Retrieve option value OR all options for a group - using localized keys
+     * Retrieve an option value or all option values for a group.
+     *
+     * Uses localized (per-locale) cache for optimal performance.
+     *
+     * @param string|null $field Field name, or null for all fields in the group.
+     * @param string      $group Group key (default: 'general')
+     * @return mixed Value of the requested field, or associative array of all fields if $field is null.
+     *
+     * @example
+     *   $logo = $ts->getOption('logo', 'header');
+     *   $all_general = $ts->getOption(null, 'general');
      */
     public function getOption($field = null, string $group = 'general')
     {
@@ -254,9 +417,12 @@ class Theme_Settings_ACF
         $option_lang = "option_" . $locale;
 
         if (empty($field)) {
+            // Retrieve all fields for the group, using cache if available
             $cache_key = $group . '_' . $locale;
             $cached = $this->cache ? $this->cache->get($cache_key) : false;
-            if ($cached !== false) return $cached;
+            if ($cached !== false) {
+                return $cached;
+            }
             $result = [];
             if (!empty($this->groups[$group]['fields'])) {
                 foreach ($this->groups[$group]['fields'] as $f) {
@@ -273,6 +439,7 @@ class Theme_Settings_ACF
             }
             return $result;
         }
+        // Retrieve a single field
         $field_name = $prefix . $field;
         $cache_key = $group . '_' . $locale;
         $cached = $this->cache ? $this->cache->get($cache_key) : false;
@@ -281,7 +448,7 @@ class Theme_Settings_ACF
         }
         $value = function_exists('get_field') ? get_field($field_name, $option_lang) : null;
 
-        // Preload cache after first database fetch
+        // Populate cache if not already cached
         if ($this->cache && $cached === false && !empty($this->groups[$group]['fields'])) {
             $all = [];
             foreach ($this->groups[$group]['fields'] as $f) {

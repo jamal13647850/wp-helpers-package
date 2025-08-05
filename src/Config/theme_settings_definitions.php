@@ -264,7 +264,7 @@ return [
                 'conditional_logic' => [
                     [
                         [
-                            'field' => 'homepage_slider_show',
+                            'field' => 'slider_show',
                             'operator' => '==',
                             'value' => '1'
                         ]
