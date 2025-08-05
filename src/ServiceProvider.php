@@ -31,6 +31,7 @@ use jamal13647850\wphelpers\Components\Menu\Variants\MobileMenu;
 use jamal13647850\wphelpers\Components\Menu\Variants\SimpleMenu;
 use jamal13647850\wphelpers\Components\Menu\Variants\DropdownMenu;
 use jamal13647850\wphelpers\Components\Menu\Variants\DesktopMenu;
+use jamal13647850\wphelpers\Components\Menu\MenuCacheManager;
 use jamal13647850\wphelpers\Utilities\Clear_Theme_Cache;
 
 defined('ABSPATH') || exit();
