@@ -73,8 +73,8 @@ final class ServiceProvider
         self::$booted = true;
 
         $theme_settings_acf = new \jamal13647850\wphelpers\Utilities\Theme_Settings_ACF();
-	
-	    new Clear_Theme_Cache();
+
+        new Clear_Theme_Cache();
 
         // 1) Register Slider Variants
         SliderManager::register('wide-auto', WideAuto::class);
@@ -158,4 +158,3 @@ final class ServiceProvider
  * Boot the package (can be called with require_once + autoload)
  * ---------------------------------------------------- */
 ServiceProvider::boot();
-
