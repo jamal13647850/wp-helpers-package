@@ -80,9 +80,4 @@ final class MultiColumnDesktopMenu extends AbstractMenu
     }
 }
 
-/**
- * Backward compatibility: keep old class name working.
- */
-final class TwoColumnDesktopMenu extends MultiColumnDesktopMenu
-{
-}
+
