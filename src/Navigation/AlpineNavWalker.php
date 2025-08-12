@@ -1,4 +1,5 @@
 <?php
+
 /**
  * File Name: AlpineNavWalker.php
  * Description: Custom WordPress nav menu walker. Implements a hybrid accordion for mobile menus.
@@ -109,6 +110,11 @@ class AlpineNavWalker extends \Walker_Nav_Menu
         'dropdown_subchild_link_class'  => 'block px-6 py-3 text-[15px] text-[#333] transition-colors duration-300 hover:text-[#d32f2f] whitespace-nowrap',
     ];
 
+    private bool $is_multi_column = false;       // render desktop submenu as N columns
+    private int $multi_columns = 2;              // N = 2..3 (قابل افزایش تا 6)
+    private array $mc_buffer = [];               // parentId => list of children (depth=1)
+    private ?int $mc_parent_id = null;
+
     /**
      * AlpineNavWalker constructor.
      *
@@ -126,10 +132,23 @@ class AlpineNavWalker extends \Walker_Nav_Menu
     }
 
     /**
-    * Setup custom variant walker options
-    */
+     * Setup custom variant walker options
+     */
     private function setupCustomVariantOptions(string $type, array $options): void
     {
+
+        if ($type === 'multi-column-desktop' || $type === 'two-column-desktop') {
+            $this->is_multi_column = true;
+            $this->multi_columns   = (int) max(1, min(6, (int)($options['dropdown_columns'] ?? 2)));
+            $this->menu_type       = 'desktop';
+
+            $this->options = array_merge($this->options, [
+                'dropdown_trigger_class' => $options['dropdown_trigger_class'] ?? 'nav-link dropdown-trigger',
+                'dropdown_link_class'    => $options['dropdown_link_class'] ?? 'dropdown-link',
+                'dropdown_arrow_class'   => $options['dropdown_arrow_class'] ?? 'dropdown-arrow fas fa-chevron-down',
+                'enable_icons'           => $options['enable_icons'] ?? true,
+            ]);
+        }
         if ($type === 'two-column-desktop') {
             $this->options = array_merge($this->options, [
                 'desktop_link_class' => $options['dropdown_trigger_class'] ?? 'nav-link dropdown-trigger flex items-center gap-2 py-6 text-foreground hover:text-primary transition-colors font-medium',
@@ -141,7 +160,7 @@ class AlpineNavWalker extends \Walker_Nav_Menu
             // Set menu_type to desktop for processing
             $this->menu_type = 'desktop';
         }
-        
+
         if ($type === 'overlay-mobile') {
             $this->options = array_merge($this->options, [
                 'mobile_link_class' => $options['mobile_link_class'] ?? 'mobile-menu-link block py-3 px-5 text-foreground hover:text-primary transition-colors font-medium',
@@ -151,6 +170,21 @@ class AlpineNavWalker extends \Walker_Nav_Menu
             // Set menu_type to mobile for processing
             $this->menu_type = 'mobile';
         }
+    }
+
+    private function mcResolveIconClass(?string $attrTitle, ?array $classes): ?string
+    {
+        if (is_string($attrTitle) && strpos($attrTitle, 'fa-') !== false) {
+            return strpos($attrTitle, 'fa ') !== false ? trim($attrTitle) : 'fa ' . trim($attrTitle);
+        }
+        if (is_array($classes)) {
+            foreach ($classes as $c) {
+                if (is_string($c) && strpos($c, 'fa-') === 0) {
+                    return 'fa ' . trim($c);
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -164,6 +198,45 @@ class AlpineNavWalker extends \Walker_Nav_Menu
      */
     public function start_el(&$output, $item, $depth = 0, $args = [], $id = 0): void
     {
+        if ($this->menu_type === 'desktop' && $this->is_multi_column) {
+            $item  = (object) $item;
+            $title = apply_filters('the_title', $item->title ?? '');
+            $url   = isset($item->url) ? esc_url($item->url) : '#';
+
+            if ($depth === 0) {
+                $this->current_item_id = (int) ($item->ID ?? 0);
+                $this->mc_parent_id    = $this->current_item_id;
+
+                $classes    = 'menu-item menu-item-' . $this->current_item_id . ' has-dropdown relative';
+                $link_class = esc_attr($this->options['dropdown_trigger_class'] ?? 'nav-link dropdown-trigger');
+                $arrow_cls  = esc_attr($this->options['dropdown_arrow_class'] ?? 'dropdown-arrow fas fa-chevron-down');
+
+                $output .= sprintf("\n<li class=\"%s\">", esc_attr($classes));
+                $output .= sprintf(
+                    '<a href="%s" class="%s"><span>%s</span><i class="%s" aria-hidden="true"></i></a>',
+                    $url,
+                    $link_class,
+                    esc_html($title),
+                    $arrow_cls
+                );
+                return;
+            }
+
+            if ($depth === 1) {
+                $this->mc_buffer[$this->mc_parent_id ?? 0][] = [
+                    'title'      => $title,
+                    'url'        => $url,
+                    'target'     => $item->target ?? '',
+                    'rel'        => $item->xfn ?? '',
+                    'attr_title' => $item->attr_title ?? '',
+                    'classes'    => $item->classes ?? [],
+                ];
+                return;
+            }
+
+            // depth >= 2 ignored per requirement
+            return;
+        }
         if ($this->menu_type === 'mobile') {
             $this->current_mobile_item_id = $item->ID;
         }
@@ -443,6 +516,13 @@ class AlpineNavWalker extends \Walker_Nav_Menu
      */
     public function start_lvl(&$output, $depth = 0, $args = []): void
     {
+        if ($this->menu_type === 'desktop' && $this->is_multi_column && $depth === 0) {
+            $indent  = str_repeat("\t", $depth + 1);
+            $output .= "\n$indent<div class=\"dropdown-menu\" x-cloak>\n";
+            $output .= "$indent\t<div class=\"dropdown-content\">\n";
+            $output .= "$indent\t\t<div class=\"dropdown-columns\">\n";
+            return;
+        }
         if ($this->menu_type === 'simple') {
             return;
         }
@@ -499,6 +579,44 @@ class AlpineNavWalker extends \Walker_Nav_Menu
     public function end_lvl(&$output, $depth = 0, $args = []): void
     {
         $indent = str_repeat("\t", $depth + 1);
+
+        if ($this->menu_type === 'desktop' && $this->is_multi_column && $depth === 0) {
+            $indent   = str_repeat("\t", $depth + 1);
+            $children = $this->mc_buffer[$this->mc_parent_id ?? 0] ?? [];
+            $count    = count($children);
+            $cols     = max(1, $this->multi_columns);
+            $perCol   = $count > 0 ? (int) ceil($count / $cols) : 0;
+
+            for ($col = 0; $col < $cols; $col++) {
+                $start = $col * $perCol;
+                $slice = ($perCol > 0) ? array_slice($children, $start, $perCol) : [];
+
+                $output .= "$indent\t\t\t<div class=\"dropdown-column\">\n";
+                foreach ($slice as $link) {
+                    $iconClass = null;
+                    if (!empty($this->options['enable_icons'])) {
+                        $iconClass = $this->mcResolveIconClass($link['attr_title'] ?? null, $link['classes'] ?? []);
+                    }
+                    $linkClass = esc_attr($this->options['dropdown_link_class'] ?? 'dropdown-link');
+                    $output .= "$indent\t\t\t\t<a href=\"" . esc_url($link['url']) . "\" class=\"$linkClass\">";
+                    if ($iconClass) {
+                        $output .= '<i class="' . esc_attr($iconClass) . '" aria-hidden="true"></i>';
+                    }
+                    $output .= '<span>' . esc_html($link['title']) . "</span></a>\n";
+                }
+                $output .= "$indent\t\t\t</div>\n";
+            }
+
+            $output .= "$indent\t\t</div>\n"; // .dropdown-columns
+            $output .= "$indent\t</div>\n";   // .dropdown-content
+            $output .= "$indent</div>\n";     // .dropdown-menu
+
+            if ($this->mc_parent_id !== null) {
+                unset($this->mc_buffer[$this->mc_parent_id]);
+            }
+            $this->mc_parent_id = null;
+            return;
+        }
 
         if ($this->menu_type === 'dropdown') {
             $output .= "$indent</ul>\n";
@@ -568,6 +686,12 @@ class AlpineNavWalker extends \Walker_Nav_Menu
      */
     public function end_el(&$output, $item, $depth = 0, $args = []): void
     {
+        if ($this->menu_type === 'desktop' && $this->is_multi_column) {
+            if ($depth === 0) {
+                $output .= "</li>\n";
+            }
+            return;
+        }
         if ($this->menu_type === 'simple' || $this->menu_type === 'dropdown') {
             $output .= "</li>\n";
             return;

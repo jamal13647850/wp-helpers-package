@@ -32,6 +32,7 @@ use jamal13647850\wphelpers\Components\Menu\Variants\SimpleMenu;
 use jamal13647850\wphelpers\Components\Menu\Variants\DropdownMenu;
 use jamal13647850\wphelpers\Components\Menu\Variants\DesktopMenu;
 use jamal13647850\wphelpers\Components\Menu\Variants\TwoColumnDesktopMenu;
+use jamal13647850\wphelpers\Components\Menu\Variants\MultiColumnDesktopMenu;
 use jamal13647850\wphelpers\Components\Menu\Variants\OverlayMobileMenu;
 use jamal13647850\wphelpers\Components\Menu\MenuCacheManager;
 use jamal13647850\wphelpers\Utilities\Clear_Theme_Cache;
@@ -93,6 +94,7 @@ final class ServiceProvider
         MenuManager::register('dropdown', DropdownMenu::class);
         MenuManager::register('desktop',  DesktopMenu::class);
         MenuManager::register('two-column-desktop', TwoColumnDesktopMenu::class);
+        MenuManager::register('multi-column-desktop', MultiColumnDesktopMenu::class);
         MenuManager::register('overlay-mobile',     OverlayMobileMenu::class);
 
         add_action('wp_update_nav_menu',         [MenuCacheManager::getInstance(), 'purgeAll'], 99);
