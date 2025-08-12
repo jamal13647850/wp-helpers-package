@@ -126,7 +126,7 @@ class AlpineNavWalker extends \Walker_Nav_Menu
         $this->menu_type = $type;
         $this->options   = wp_parse_args($options, $this->default_options);
 
-        if (in_array($type, ['two-column-desktop', 'overlay-mobile'])) {
+        if (in_array($type, ['multi-column-desktop', 'overlay-mobile'])) {
             $this->setupCustomVariantOptions($type, $options);
         }
     }
@@ -137,7 +137,7 @@ class AlpineNavWalker extends \Walker_Nav_Menu
     private function setupCustomVariantOptions(string $type, array $options): void
     {
 
-        if ($type === 'multi-column-desktop' || $type === 'two-column-desktop') {
+        if ($type === 'multi-column-desktop' ) {
             $this->is_multi_column = true;
             $this->multi_columns   = (int) max(1, min(6, (int)($options['dropdown_columns'] ?? 2)));
             $this->menu_type       = 'desktop';
@@ -149,17 +149,7 @@ class AlpineNavWalker extends \Walker_Nav_Menu
                 'enable_icons'           => $options['enable_icons'] ?? true,
             ]);
         }
-        if ($type === 'two-column-desktop') {
-            $this->options = array_merge($this->options, [
-                'desktop_link_class' => $options['dropdown_trigger_class'] ?? 'nav-link dropdown-trigger flex items-center gap-2 py-6 text-foreground hover:text-primary transition-colors font-medium',
-                'dropdown_link_class' => $options['dropdown_link_class'] ?? 'dropdown-link flex items-center gap-3 px-6 py-3 text-foreground hover:text-primary transition-colors',
-                'dropdown_arrow_class' => $options['dropdown_arrow_class'] ?? 'dropdown-arrow fas fa-chevron-down text-xs text-primary transition-transform duration-300',
-                'dropdown_columns' => $options['dropdown_columns'] ?? 2,
-                'enable_icons' => $options['enable_icons'] ?? true,
-            ]);
-            // Set menu_type to desktop for processing
-            $this->menu_type = 'desktop';
-        }
+     
 
         if ($type === 'overlay-mobile') {
             $this->options = array_merge($this->options, [
