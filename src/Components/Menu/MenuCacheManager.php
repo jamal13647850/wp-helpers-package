@@ -1,73 +1,34 @@
 <?php
 
-/**
- * Menu Cache Manager
- * Caching layer for menu rendering with dynamic cache backend selection.
- *
- * @package   jamal13647850/wphelpers
- * @author    Sayyed Jamal Ghasemi <info@jamalghasemi.com>
- * @version   1.0.0
- */
+declare(strict_types=1);
 
 namespace jamal13647850\wphelpers\Components\Menu;
+
+use jamal13647850\wphelpers\Cache\CacheManager;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-
-
-use jamal13647850\wphelpers\Components\Menu\MenuManager;
-use jamal13647850\wphelpers\Cache\CacheManager;
-
-class MenuCacheManager
+final class MenuCacheManager
 {
-
-    /**
-     * CacheManager instance (object or transient)
-     * @var CacheManager
-     */
+    /** @var CacheManager */
     protected $driver;
 
-    /**
-     * Cache prefix
-     * @var string
-     */
-    protected $prefix = 'menu_cache_';
+    protected string $prefix = 'menu_cache_';
+    protected bool $bypass  = false;
+    protected int $ttl      = 604800; // 7 days
 
-    /**
-     * Bypass flag
-     * @var bool
-     */
-    protected $bypass = false;
+    private static ?self $instance = null;
 
-    /**
-     * TTL for cache (seconds)
-     * @var int
-     */
-    protected $ttl = 604800;
-
-    /**
-     * Singleton instance
-     * @var self
-     */
-    protected static $instance = null;
-
-    /**
-     * Constructor (private)
-     */
-    protected function __construct()
+    private function __construct()
     {
-        // Allow bypass via filter for debugging
-        $this->bypass = (bool) apply_filters('menu_cache/bypass', ![$this, 'isDebug']);
+        // ✅ فیکس: قبلاً ![$this,'isDebug'] بود که غلط است
+        $this->bypass = (bool) apply_filters('menu_cache/bypass', !$this->isDebug());
+        $this->prefix = (string) apply_filters('menu_cache/prefix', $this->prefix);
+        $this->ttl    = (int) apply_filters('menu_cache/ttl', $this->ttl);
 
-        // Unique prefix for cache keys
-        $this->prefix = apply_filters('menu_cache/prefix', $this->prefix);
-
-        // TTL: allow override
-        $this->ttl = (int) apply_filters('menu_cache/ttl', $this->ttl);
-
-        // Dynamic driver selection (object cache/redis, fallback to transient)
+        // انتخاب درایور کش
         if (!$this->bypass && function_exists('wp_cache_set') && $this->isRedisAvailable()) {
             $this->driver = new CacheManager('object', $this->prefix);
         } else {
@@ -75,22 +36,15 @@ class MenuCacheManager
         }
     }
 
-    /**
-     * Check if should bypass for development
-     */
-    protected function isDebug()
+    private function isDebug(): bool
     {
-        if (defined('CACHE_THEME') && CACHE_THEME)      return false;
-        if (defined('WP_DEBUG') && WP_DEBUG)      return true;
-        if (defined('WP_ENV') && WP_ENV === 'development') return true;
+        if (defined('CACHE_THEME') && CACHE_THEME) { return false; }
+        if (defined('WP_DEBUG') && WP_DEBUG) { return true; }
+        if (defined('WP_ENV') && WP_ENV === 'development') { return true; }
         return false;
     }
 
-    /**
-     * Get singleton instance.
-     * @return self
-     */
-    public static function getInstance()
+    public static function getInstance(): self
     {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -98,30 +52,17 @@ class MenuCacheManager
         return self::$instance;
     }
 
-    /**
-     * Get cached menu HTML or regenerate and set.
-     *
-     * @param string $key          Menu type (desktop/mobile/...)
-     * @param string $themeLocation
-     * @param array  $options
-     * @param array  $walkerOptions
-     * @return string
-     */
-    public function getMenu($key, $themeLocation, $options = [], $walkerOptions = [])
+    public function getMenu(string $key, string $themeLocation, array $options = [], array $walkerOptions = []): string
     {
         $cacheKey = $this->getCacheKey($key, $themeLocation);
 
-        
         if (!$this->bypass) {
-           
-            // Try to get cached HTML
             $cached = $this->driver->get($cacheKey);
             if ($cached !== false && is_string($cached)) {
                 return $cached;
             }
         }
 
-        // Render menu (call MenuManager directly)
         $html = MenuManager::render($key, $themeLocation, $options, $walkerOptions);
 
         if (!$this->bypass) {
@@ -131,33 +72,24 @@ class MenuCacheManager
         return $html;
     }
 
-    /**
-     * Cache key generator.
-     */
-    public function getCacheKey($key, $themeLocation)
+    public function getCacheKey(string $key, string $themeLocation): string
     {
-        $parts = [
+        return implode('_', [
             $this->prefix,
             $key,
-            $themeLocation
-        ];
-        return implode('_', $parts);
+            $themeLocation,
+        ]);
     }
 
-    /**
-     * Purge all menu caches.
-     * Use this on menu or settings update.
-     */
-    public function purge($key, $themeLocation)
+    public function purge(string $key, string $themeLocation): void
     {
         $this->driver->delete($this->getCacheKey($key, $themeLocation));
     }
 
-    public function purgeAll()
+    public function purgeAll(): void
     {
-        $keys = ['desktop', 'mobile', 'dropdown', 'simple'];
+        $keys = ['desktop', 'mobile', 'dropdown', 'simple','multi-column-desktop', 'overlay-mobile'];
         $locations = array_keys(get_registered_nav_menus());
-
         foreach ($keys as $key) {
             foreach ($locations as $location) {
                 $this->purge($key, $location);
@@ -165,26 +97,11 @@ class MenuCacheManager
         }
     }
 
-    /**
-     * Check if Redis object cache is available.
-     * @return bool
-     */
-    protected function isRedisAvailable()
+    private function isRedisAvailable(): bool
     {
-        // Basic check: can be improved depending on stack
         global $wp_object_cache;
         return is_object($wp_object_cache) && method_exists($wp_object_cache, 'redis');
     }
-
-
 }
 
 
-/*
-=========================
-= Developer Signature =
-=========================
-File: Menu_Cache_Manager.php
-By: Sayyed Jamal Ghasemi – jamal13647850/wphelpers
-https://github.com/jamal13647850
-*/

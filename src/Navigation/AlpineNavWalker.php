@@ -193,24 +193,38 @@ class AlpineNavWalker extends \Walker_Nav_Menu
             $title = apply_filters('the_title', $item->title ?? '');
             $url   = isset($item->url) ? esc_url($item->url) : '#';
 
-            if ($depth === 0) {
-                $this->current_item_id = (int) ($item->ID ?? 0);
-                $this->mc_parent_id    = $this->current_item_id;
+              if ($depth === 0) {
+            // ⬇️ تشخیص اینکه این آیتم واقعاً فرزند دارد یا نه
+            $classes_wp   = empty($item->classes) ? [] : (array) $item->classes;
+            $has_children = in_array('menu-item-has-children', $classes_wp, true);
 
-                $classes    = 'menu-item menu-item-' . $this->current_item_id . ' has-dropdown relative';
-                $link_class = esc_attr($this->options['dropdown_trigger_class'] ?? 'nav-link dropdown-trigger');
-                $arrow_cls  = esc_attr($this->options['dropdown_arrow_class'] ?? 'dropdown-arrow fas fa-chevron-down');
-
-                $output .= sprintf("\n<li class=\"%s\">", esc_attr($classes));
-                $output .= sprintf(
-                    '<a href="%s" class="%s"><span>%s</span><i class="%s" aria-hidden="true"></i></a>',
-                    $url,
-                    $link_class,
-                    esc_html($title),
-                    $arrow_cls
-                );
-                return;
+            // کلاس‌های <li>
+            $li_classes   = $classes_wp;
+            $li_classes[] = 'menu-item-' . (int) ($item->ID ?? 0);
+            $li_classes[] = 'relative';
+            if ($has_children) {
+                $li_classes[] = 'has-dropdown';
             }
+            $output .= "\n<li class=\"" . esc_attr(implode(' ', array_filter($li_classes))) . "\">";
+
+            // کلاس لینک: اگر فرزند دارد همان trigger؛ اگر ندارد فقط کلاس معمولی
+            $link_class_children    = esc_attr($this->options['dropdown_trigger_class'] ?? 'nav-link dropdown-trigger');
+            $link_class_no_children = esc_attr($this->options['desktop_link_class'] ?? 'nav-link');
+            $link_class             = $has_children ? $link_class_children : $link_class_no_children;
+
+            // نگهداری آی‌دی والد برای رندر پنل فقط وقتی واقعاً فرزند دارد
+            $this->mc_parent_id = $has_children ? (int) ($item->ID ?? 0) : null;
+
+            // لینک + فلش فقط برای والد
+            $output .= '<a href="' . $url . '" class="' . $link_class . '"><span>' . esc_html($title) . '</span>';
+            if ($has_children) {
+                $arrow_cls = esc_attr($this->options['dropdown_arrow_class'] ?? 'dropdown-arrow fas fa-chevron-down');
+                $output   .= '<i class="' . $arrow_cls . '" aria-hidden="true"></i>';
+            }
+            $output .= '</a>';
+
+            return;
+        }
 
             if ($depth === 1) {
                 $this->mc_buffer[$this->mc_parent_id ?? 0][] = [
@@ -508,7 +522,7 @@ class AlpineNavWalker extends \Walker_Nav_Menu
     {
         if ($this->menu_type === 'desktop' && $this->is_multi_column && $depth === 0) {
             $indent  = str_repeat("\t", $depth + 1);
-            $output .= "\n$indent<div class=\"dropdown-menu\" x-cloak>\n";
+            $output .= "\n$indent<div class=\"dropdown-menu\" >\n";
             $output .= "$indent\t<div class=\"dropdown-content\">\n";
             $output .= "$indent\t\t<div class=\"dropdown-columns\">\n";
             return;

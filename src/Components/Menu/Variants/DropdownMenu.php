@@ -44,6 +44,7 @@ final class DropdownMenu extends AbstractMenu
         return [
             'menu_id'     => 'dropdown-menu',
             'menu_class'  => 'flex list-none m-0 p-0',
+            'aria_label'  => 'منوی کشویی',
             'items_wrap'  => '<ul id="%1$s" class="%2$s">%3$s</ul>',
             'echo'        => false,
             'fallback_cb' => false,

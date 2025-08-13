@@ -4,31 +4,16 @@ declare(strict_types=1);
 namespace jamal13647850\wphelpers\Components\Menu\Variants;
 
 use jamal13647850\wphelpers\Components\Menu\AbstractMenu;
-use jamal13647850\wphelpers\Components\Menu\Options\MenuOptions;
 
-// ===== IMPLEMENTATION =====
-
-/**
- * File: MultiColumnDesktopMenu.php
- * Variant: Multi-column desktop dropdown (2..3 columns)
- *
- * Renders desktop submenu as evenly distributed columns under:
- * .dropdown-menu > .dropdown-content > .dropdown-columns > .dropdown-column > a.dropdown-link
- */
 final class MultiColumnDesktopMenu extends AbstractMenu
 {
-    /**
-     * Default options for this variant.
-     *
-     * @return array<string,mixed>
-     */
     protected static function defaultOptions(): array
     {
         return [
             'menu_id'                => 'multi-column-desktop-menu',
             'menu_class'             => 'nav-menu',
             'aria_label'             => 'منوی اصلی',
-            'dropdown_columns'       => 2, // 2 or 3
+            'dropdown_columns'       => 2,
             'enable_icons'           => true,
             'dropdown_trigger_class' => 'nav-link dropdown-trigger',
             'dropdown_link_class'    => 'dropdown-link',
@@ -38,15 +23,7 @@ final class MultiColumnDesktopMenu extends AbstractMenu
         ];
     }
 
-    /**
-     * Render the multi-column desktop menu.
-     *
-     * @param string               $themeLocation
-     * @param array<string,mixed>  $options
-     * @param array<string,mixed>  $walkerOptions
-     * @return string
-     */
-    public  function render(
+    public function render(
         string $themeLocation,
         array $options = [],
         array $walkerOptions = []
@@ -69,15 +46,17 @@ final class MultiColumnDesktopMenu extends AbstractMenu
             'fallback_cb'    => (bool) $opts->get('fallback_cb'),
             'echo'           => (bool) $opts->get('echo'),
         ];
-        $args['walker'] = $this->makeWalker('multi-column-desktop', $walkerOptions);
-        $args['items_wrap'] = sprintf(
-            '<ul id="%%1$s" class="%%2$s" aria-label="%s">%%3$s</ul>',
-            esc_attr__($opts->get('aria_label'), 'wp-helpers')
+
+        $args['walker'] = $this->makeWalker(
+            'multi-column-desktop',
+            array_merge($walkerVariantOptions, $walkerOptions)
         );
 
-        /** @psalm-suppress UndefinedFunction */
+        $args['items_wrap'] = sprintf(
+            '<ul id="%%1$s" class="%%2$s" aria-label="%s">%%3$s</ul>',
+            esc_attr__($opts->get('aria_label'), 'your-theme-textdomain')
+        );
+
         return (string) wp_nav_menu($args);
     }
 }
-
-

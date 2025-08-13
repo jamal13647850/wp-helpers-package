@@ -147,16 +147,16 @@ final class ServiceProvider
     public static function enqueueAssets(): void
     {
         // Register Alpine.js (only if not already registered elsewhere)
-        if (!wp_script_is('alpinejs', 'registered')) {
-            wp_register_script(
-                'alpinejs',
-                'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',
-                [],
-                null,
-                true
-            );
-        }
-        wp_enqueue_script('alpinejs');
+        // if (!wp_script_is('alpinejs', 'registered')) {
+        //     wp_register_script(
+        //         'alpinejs',
+        //         'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',
+        //         [],
+        //         null,
+        //         true
+        //     );
+        // }
+        // wp_enqueue_script('alpinejs');
     }
 }
 

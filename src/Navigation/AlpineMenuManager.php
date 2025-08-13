@@ -74,14 +74,12 @@ class AlpineMenuManager
             'theme_location' => $theme_location,
             'menu_id'        => 'primary-menu-desktop',
             'menu_class'     => 'flex items-center space-x-2 relative',
-            // ترجمه label به فارسی
             'items_wrap'     => '<ul id="%1$s" class="%2$s" aria-label="' . esc_attr__('ناوبری اصلی', 'your-theme-textdomain') . '">%3$s</ul>',
             'walker'         => new AlpineNavWalker('desktop', $walker_options),
         ];
 
         $args = wp_parse_args($override_args, wp_parse_args($desktop_defaults, $this->default_args));
-        $args['walker'] = new AlpineNavWalker('desktop', $walker_options);
-        $args['echo']   = false;
+        
 
         $menu_output = wp_nav_menu($args);
 

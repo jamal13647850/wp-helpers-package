@@ -15,6 +15,7 @@ namespace jamal13647850\wphelpers\Components\Menu;
 
 use jamal13647850\wphelpers\Components\Menu\Options\MenuOptions;
 use jamal13647850\wphelpers\Navigation\AlpineNavWalker;
+use jamal13647850\wphelpers\Assets\AssetManager;
 
 /**
  * AbstractMenu
@@ -69,6 +70,38 @@ abstract class AbstractMenu
     protected function makeWalker(string $mode, array $walkerOptions = []): AlpineNavWalker
     {
         return new AlpineNavWalker($mode, $walkerOptions);
+    }
+
+
+     /** Variant may override to declare its assets */
+    protected static function assets(): array
+    {
+        return [
+            'styles'  => [], // [['handle'=>..., 'src'=>..., 'deps'=>[], 'ver'=>null, 'media'=>'all']]
+            'scripts' => [], // [['handle'=>..., 'src'=>..., 'deps'=>[], 'ver'=>null, 'footer'=>true]]
+        ];
+    }
+
+    protected function enqueueAssets(): void
+    {
+        foreach (static::assets()['styles'] as $style) {
+            AssetManager::style(
+                $style['handle'],
+                $style['src'],
+                $style['deps']  ?? [],
+                $style['ver']   ?? null,
+                $style['media'] ?? 'all'
+            );
+        }
+        foreach (static::assets()['scripts'] as $script) {
+            AssetManager::script(
+                $script['handle'],
+                $script['src'],
+                $script['deps']   ?? [],
+                $script['ver']    ?? null,
+                $script['footer'] ?? true
+            );
+        }
     }
 }
 
