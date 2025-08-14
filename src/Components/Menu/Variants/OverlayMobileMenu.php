@@ -118,42 +118,7 @@ final class OverlayMobileMenu extends AbstractMenu
      *
      * @since 1.0.0
      */
-    protected static function assets(): array
-    {
-        // CSS asset configuration - loaded from active theme
-        $rel  = '/assets/menu/overlay-mobile.css';
-        $src  = get_stylesheet_directory_uri() . $rel;
-        $file = get_stylesheet_directory() . $rel;
-        $ver  = file_exists($file) ? (string) filemtime($file) : null;
-
-        // JavaScript asset configuration - loaded from plugin directory
-        $js_rel  = 'assets/menu/overlay-mobile-toggle.js';
-        $js_src  = plugins_url($js_rel, WPHELPERS_MAIN);
-        $js_file = plugin_dir_path(WPHELPERS_MAIN) . $js_rel;
-        $js_ver  = file_exists($js_file) ? (string) filemtime($js_file) : null;
-
-        return [
-            'styles' => [
-                [
-                    'handle' => 'overlay-mobile-menu',
-                    'src'    => $src,
-                    'deps'   => [],
-                    'ver'    => $ver,
-                    'media'  => 'all',
-                ],
-            ],
-            'scripts' => [
-                [
-                    'handle' => 'overlay-mobile-toggle',
-                    'src'    => $js_src,
-                    'deps'   => [],
-                    'ver'    => $js_ver,
-                    'in_footer' => true,
-                ],
-            ],
-        ];
-    }
-
+    
     /**
      * Renders the complete overlay mobile menu HTML structure
      *

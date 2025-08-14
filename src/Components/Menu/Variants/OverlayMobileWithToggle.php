@@ -211,7 +211,7 @@ final class OverlayMobileWithToggle extends AbstractMenu
         // - Click handler for menu toggle functionality
         // - ARIA attributes for accessibility compliance
         $button = sprintf(
-            '<button id="%s" class="%s" aria-label="%s" aria-controls="mobile-menu" x-bind:aria-expanded="mobileMenuOpen ? \'true\' : \'false\'" x-bind:class="{ \'active\': mobileMenuOpen }" @click="mobileMenuOpen = !mobileMenuOpen"><span></span><span></span><span></span></button>',
+            '<button id="%s" class="%s" aria-label="%s" aria-controls="mobile-menu" x-bind:aria-expanded="mobileMenuOpen ? \'true\' : \'false\'" x-bind:class="{ \'active\': mobileMenuOpen }" @click.stop.prevent="mobileMenuOpen = !mobileMenuOpen"><span></span><span></span><span></span></button>',
             esc_attr((string) $opts->get('button_id')),
             esc_attr((string) $opts->get('button_class')),
             esc_attr((string) $opts->get('button_label'))
