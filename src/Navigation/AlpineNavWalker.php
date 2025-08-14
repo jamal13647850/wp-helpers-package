@@ -721,7 +721,7 @@ class AlpineNavWalker extends \Walker_Nav_Menu
      * @param int|null $item_id (Optional) Top-level menu item ID for global accordion state (mobile only).
      * @return string SVG markup for dropdown indicator icon.
      */
-    private function generateDropdownIcon(int $item_id = null): string
+    private function generateDropdownIcon(?int $item_id = null): string
     {
         $transform_attr = '';
         $fill_attr      = '';
