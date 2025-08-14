@@ -19,171 +19,225 @@ use jamal13647850\wphelpers\Components\Menu\MenuManager;
 defined('ABSPATH') || exit();
 
 /**
- * OverlayMobileWithToggle - Complete mobile navigation solution with hamburger button
- * 
- * A composite menu component that combines a hamburger toggle button with an overlay mobile menu
- * in a single, cohesive unit. This component provides a complete mobile navigation solution
- * that handles both the trigger mechanism and the menu display.
- * 
- * Features:
- * - Hamburger-style toggle button with three-line icon
- * - Integrated Alpine.js state management for open/closed states
- * - Full accessibility support with ARIA attributes
- * - Seamless integration with OverlayMobileMenu component
- * - Single wrapper container with unified state management
- * - Persian accessibility labels for better UX in Persian-language sites
- * 
+ * Overlay Mobile Menu with Hamburger Toggle Button
+ *
+ * A complete mobile navigation solution that combines a hamburger toggle button
+ * with an overlay mobile menu in a unified component. This class orchestrates
+ * the interaction between the toggle button and the menu overlay, providing
+ * synchronized state management and styling through Alpine.js.
+ *
+ * Key Features:
+ * - Hamburger button with animated states (active/inactive)
+ * - Integrated overlay menu through MenuManager
+ * - Unified Alpine.js state management scope
+ * - Synchronized ARIA attributes for accessibility
+ * - CSS class synchronization between button and menu states
+ * - Automatic asset coordination
+ *
  * Architecture:
- * This component acts as a facade that orchestrates two main elements:
- * 1. Toggle button (hamburger icon) with click handlers
- * 2. OverlayMobileMenu component for the actual menu content
- * 
- * Both elements share a common Alpine.js state (`mobileMenuOpen`) for synchronized behavior.
- * 
+ * This component acts as a coordinator that:
+ * 1. Renders a hamburger toggle button with Alpine.js bindings
+ * 2. Delegates menu rendering to OverlayMobileMenu via MenuManager
+ * 3. Provides unified state management through a single x-data scope
+ * 4. Ensures proper accessibility relationships between button and menu
+ *
+ * State Management:
+ * - Uses Alpine.js x-data for reactive state
+ * - mobileMenuOpen: Controls visibility and active states
+ * - opens: Object for tracking submenu accordion states
+ * - Prevents duplicate state by disabling menu's internal state provision
+ *
  * Usage Example:
  * ```php
- * // Simple usage - button + menu with default options
- * echo MenuManager::render('overlay-mobile-with-toggle', 'primary');
- * 
- * // With custom button styling and menu options
- * echo MenuManager::render('overlay-mobile-with-toggle', 'primary', [
- *     'button_class' => 'custom-hamburger-btn',
- *     'menu_options' => [
- *         'max_depth' => 2,
- *         'accordion_mode' => 'independent'
- *     ]
+ * $navComponent = new OverlayMobileWithToggle();
+ * echo $navComponent->render('primary', [
+ *     'button_class' => 'custom-hamburger',
+ *     'menu_options' => ['max_depth' => 3]
  * ]);
  * ```
- * 
- * HTML Structure Generated:
- * ```html
- * <div class="wphelpers-overlay-mobile-nav" x-data="{ mobileMenuOpen: false }">
- *   <button id="mobile-menu-button" class="mobile-menu-btn" 
- *           aria-label="باز و بسته کردن منو" @click="mobileMenuOpen = !mobileMenuOpen">
- *     <span></span><span></span><span></span>
- *   </button>
- *   <!-- OverlayMobileMenu content -->
- *   <div id="mobile-menu" class="mobile-menu" role="dialog">...</div>
- * </div>
- * ```
- * 
+ *
  * @package jamal13647850\wphelpers\Components\Menu\Variants
  * @since 1.0.0
  * @author Sayyed Jamal Ghasemi
- * @see OverlayMobileMenu For the underlying menu component implementation
- * @see MenuManager For the component registration and rendering system
  */
 final class OverlayMobileWithToggle extends AbstractMenu
 {
     /**
-     * Define default configuration options for the complete mobile navigation
-     * 
-     * Provides configuration for both the hamburger button and passes options
-     * through to the underlying OverlayMobileMenu component.
-     * 
-     * @return array<string,mixed> Associative array of default option values
-     * @since 1.0.0
-     * 
-     * Configuration Structure:
-     * - Button-specific options for the hamburger toggle
+     * Defines default configuration options for the toggle button and menu integration
+     *
+     * Provides configuration options specifically for the hamburger button and
+     * coordination with the overlay menu. The menu-specific options are delegated
+     * to the OverlayMobileMenu component through the 'menu_options' parameter.
+     *
+     * Button Configuration:
+     * - Unique identification and styling for the toggle button
+     * - Accessibility labels in Persian for screen readers
      * - Pass-through options for the underlying menu component
-     * - Persian accessibility labels for better localization
-     * 
-     * @example
-     * ```php
-     * $defaults = OverlayMobileWithToggle::defaultOptions();
-     * // Customize button while keeping menu defaults
-     * $custom = array_merge($defaults, [
-     *     'button_class' => 'my-custom-hamburger',
-     *     'menu_options' => ['max_depth' => 3]
-     * ]);
-     * ```
+     *
+     * Integration Strategy:
+     * The 'menu_options' array is passed directly to the OverlayMobileMenu
+     * component, allowing full customization of menu behavior while maintaining
+     * the integrated button functionality.
+     *
+     * @return array<string, mixed> Associative array of default configuration options
+     *
+     * @since 1.0.0
      */
     protected static function defaultOptions(): array
     {
         return [
-            // Hamburger button configuration
-            'button_id'          => 'mobile-menu-button',        // HTML ID attribute for the toggle button
-            'button_class'       => 'mobile-menu-btn',           // CSS classes for button styling
-            'button_label'       => 'باز و بسته کردن منو',        // Persian: "Open and close menu" - accessibility label
-            
-            // Pass-through options for OverlayMobileMenu component
-            'menu_options'       => [],                          // Array of options forwarded to the underlying menu
+            // Toggle button identification and styling
+            'button_id'          => 'mobile-menu-button',
+            'button_class'       => 'mobile-menu-btn',
+            'button_label'       => 'باز و بسته کردن منو',
+
+            // Options passed through to OverlayMobileMenu component
+            // This allows full customization of the menu behavior
+            'menu_options'       => [],
         ];
     }
 
     /**
-     * Render the complete mobile navigation HTML structure
-     * 
-     * Creates a unified mobile navigation solution by combining:
-     * 1. Hamburger toggle button with Alpine.js click handlers
-     * 2. OverlayMobileMenu component via MenuManager
-     * 3. Shared Alpine.js state container for synchronized behavior
-     * 
-     * The component uses MenuManager to delegate the actual menu rendering
-     * to the 'overlay-mobile' variant, ensuring consistency and avoiding
-     * code duplication.
-     * 
-     * @param string $themeLocation WordPress theme location identifier for the menu
-     * @param array  $options       Configuration options for both button and menu
-     * @param array  $walkerOptions Optional walker-specific options (passed through to menu)
-     * @return string Complete HTML markup for button + overlay menu
+     * Defines asset dependencies for the combined toggle and menu component
+     *
+     * This component delegates asset management to the underlying OverlayMobileMenu
+     * component through the MenuManager. Since the menu component handles its own
+     * CSS and JavaScript enqueueing, this method returns empty arrays to avoid
+     * duplicate asset loading.
+     *
+     * Asset Management Strategy:
+     * - No direct asset registration to prevent conflicts
+     * - Relies on OverlayMobileMenu's asset management via MenuManager
+     * - MenuManager automatically handles asset enqueueing when rendering
+     * - CSS and JavaScript are loaded once regardless of component composition
+     *
+     * Benefits:
+     * - Prevents duplicate asset loading
+     * - Maintains clean separation of concerns
+     * - Reduces HTTP requests and file size
+     * - Ensures consistent styling across components
+     *
+     * @return array<string, array> Empty arrays for 'styles' and 'scripts'
+     *                              since assets are managed by the menu component
+     *
      * @since 1.0.0
-     * 
+     */
+    protected static function assets(): array
+    {
+        // Asset management is delegated to OverlayMobileMenu via MenuManager
+        // This prevents duplicate loading of CSS/JS resources
+        return [
+            'styles'  => [],
+            'scripts' => [],
+        ];
+    }
+
+    /**
+     * Renders the complete hamburger button and overlay menu system
+     *
+     * Orchestrates the rendering of both the toggle button and the overlay menu
+     * within a unified Alpine.js state management scope. This method ensures
+     * proper coordination between the button and menu states, accessibility
+     * relationships, and prevents duplicate state management.
+     *
+     * Rendering Process:
+     * 1. Merge provided options with component defaults
+     * 2. Generate hamburger button with Alpine.js bindings and accessibility attributes
+     * 3. Render overlay menu via MenuManager with state provision disabled
+     * 4. Wrap both components in unified container with shared state scope
+     *
+     * Button Features:
+     * - Three-span hamburger icon structure for CSS animations
+     * - Alpine.js bindings for aria-expanded and active class states
+     * - Click handler for toggling menu visibility
+     * - ARIA controls relationship with menu container
+     *
      * State Management:
-     * - Uses Alpine.js `x-data="{ mobileMenuOpen: false }"` for state
-     * - Button toggles state with `@click="mobileMenuOpen = !mobileMenuOpen"`
-     * - Menu responds to state changes for show/hide behavior
-     * - ARIA attributes update reactively based on state
-     * 
+     * - Single x-data scope prevents conflicting state management
+     * - mobileMenuOpen controls both button and menu states
+     * - opens object manages submenu accordion states
+     * - Disables menu's internal state provision to avoid duplication
+     *
+     * Accessibility Features:
+     * - aria-label for screen reader button identification
+     * - aria-controls linking button to menu container
+     * - aria-expanded state reflecting menu visibility
+     * - Keyboard navigation support through menu component
+     *
+     * @param string $themeLocation WordPress theme location identifier for the menu
+     * @param array<string, mixed> $options Optional configuration overrides for button and menu
+     * @param array<string, mixed> $walkerOptions Optional walker-specific configuration (passed to menu)
+     *
+     * @return string Complete HTML markup for the integrated button and menu system
+     *
+     * @since 1.0.0
+     *
      * @example
      * ```php
-     * // Basic usage
+     * // Basic usage with default styling
      * $component = new OverlayMobileWithToggle();
      * echo $component->render('primary');
-     * 
-     * // With custom button and menu options
-     * echo $component->render('header_menu', [
-     *     'button_class' => 'header-hamburger',
+     *
+     * // Advanced usage with custom button and menu options
+     * echo $component->render('primary', [
+     *     'button_class' => 'custom-hamburger-btn',
+     *     'button_label' => 'تغییر وضعیت منو',
      *     'menu_options' => [
-     *         'container_class' => 'header-mobile-menu',
-     *         'max_depth' => 2
+     *         'max_depth' => 2,
+     *         'accordion_mode' => 'exclusive',
+     *         'enable_icons' => true
+     *     ]
+     * ]);
+     *
+     * // Integration with custom CSS classes
+     * echo $component->render('mobile-nav', [
+     *     'button_id' => 'main-nav-toggle',
+     *     'menu_options' => [
+     *         'container_class' => 'main-mobile-overlay',
+     *         'mobile_link_class' => 'nav-link-mobile'
      *     ]
      * ]);
      * ```
-     * 
-     * Accessibility Features:
-     * - `aria-label` with Persian description for screen readers
-     * - `aria-controls` linking button to menu container
-     * - `aria-expanded` state that updates reactively
-     * - Semantic button element for proper keyboard navigation
      */
     public function render(string $themeLocation, array $options = [], array $walkerOptions = []): string
     {
         // Merge provided options with component defaults
         $opts = $this->makeOptions($options);
-        
-        // Generate hamburger toggle button with Alpine.js integration
+
+        // Generate hamburger toggle button with Alpine.js state bindings
+        // The button includes:
+        // - Three spans for hamburger icon animation
+        // - Alpine.js bindings for aria-expanded and active class states
+        // - Click handler for menu toggle functionality
+        // - ARIA attributes for accessibility compliance
         $button = sprintf(
-            '<button id="%s" class="%s" aria-label="%s" aria-controls="mobile-menu" x-bind:aria-expanded="mobileMenuOpen ? \'true\' : \'false\'" @click="mobileMenuOpen = !mobileMenuOpen"><span></span><span></span><span></span></button>',
-            esc_attr((string) $opts->get('button_id')),     // Unique button ID for styling and JavaScript targeting
-            esc_attr((string) $opts->get('button_class')),  // CSS classes for hamburger icon styling
-            esc_attr((string) $opts->get('button_label'))   // Persian accessibility label for screen readers
+            '<button id="%s" class="%s" aria-label="%s" aria-controls="mobile-menu" x-bind:aria-expanded="mobileMenuOpen ? \'true\' : \'false\'" x-bind:class="{ \'active\': mobileMenuOpen }" @click="mobileMenuOpen = !mobileMenuOpen"><span></span><span></span><span></span></button>',
+            esc_attr((string) $opts->get('button_id')),
+            esc_attr((string) $opts->get('button_class')),
+            esc_attr((string) $opts->get('button_label'))
         );
-        
-        // Delegate menu rendering to the dedicated OverlayMobileMenu component
-        // This ensures consistency and avoids duplicating menu logic
+
+        // Render the overlay menu through MenuManager
+        // Critical: Set 'provide_state' to false to prevent duplicate Alpine.js x-data
+        // This ensures the menu uses the state scope provided by this component
         $menuHtml = MenuManager::render(
-            'overlay-mobile',                               // Component variant identifier
-            $themeLocation,                                 // WordPress menu location
-            (array) $opts->get('menu_options')              // Pass-through options for menu component
+            'overlay-mobile',
+            $themeLocation,
+            array_merge(
+                (array) $opts->get('menu_options'),
+                ['provide_state' => false] // Prevents duplicate state management
+            )
         );
-        
-        // Wrap both button and menu in unified Alpine.js state container
-        // This creates a single source of truth for the open/closed state
-        return '<div class="wphelpers-overlay-mobile-nav" x-data="{ mobileMenuOpen:false }">' . 
-               $button . 
-               $menuHtml . 
-               '</div>';
+
+        // Wrap button and menu in unified container with shared Alpine.js state
+        // The container provides:
+        // - Unified x-data scope for state management
+        // - Data attribute for CSS targeting
+        // - Semantic grouping of related components
+        return sprintf(
+            '<div class="wphelpers-overlay-mobile-nav" x-data="{ mobileMenuOpen:false, opens:{} }" data-overlay-nav>%s%s</div>',
+            $button,
+            $menuHtml
+        );
     }
 }
