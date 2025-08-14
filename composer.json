@@ -12,7 +12,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "php": ">=7.4",
+        "php": ">=8.4",
         "twig/twig": "^3.0",
         "jamal13647850/sms-api": "^2.4"
     },
