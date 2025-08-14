@@ -1,68 +1,96 @@
 <?php
+declare(strict_types=1);
 
 /*
-Sayyed Jamal Ghasemi — Full-Stack Developer  
-📧 info@jamalghasemi.com  
-🔗 LinkedIn: https://www.linkedin.com/in/jamal1364/  
-📸 Instagram: https://www.instagram.com/jamal13647850  
-💬 Telegram: https://t.me/jamal13647850  
-🌐 https://jamalghasemi.com  
+Sayyed Jamal Ghasemi — Full-Stack Developer
+📧 info@jamalghasemi.com
+🔗 LinkedIn: https://www.linkedin.com/in/jamal1364/
+📸 Instagram: https://www.instagram.com/jamal13647850
+💬 Telegram: https://t.me/jamal13647850
+🌐 https://jamalghasemi.com
 */
-
-declare(strict_types=1);
 
 namespace jamal13647850\wphelpers\Components\Menu\Variants;
 
 use jamal13647850\wphelpers\Components\Menu\AbstractMenu;
+use jamal13647850\wphelpers\Navigation\SimpleWalker;
 
 /**
- * SimpleMenu
+ * Class SimpleMenu
  *
- * Simple horizontal menu variant (usually displayed at the top of the site).
- * Provides streamlined markup for a top navigation bar.
+ * A minimal WordPress menu variant that renders a flat (non-nested) navigation
+ * using the {@see SimpleWalker} for link-specific styling.
  *
- * Usage:
- *   $menu = new SimpleMenu();
- *   echo $menu->render('top');
+ * Behavior:
+ * - Merges caller options with sensible defaults.
+ * - Instantiates SimpleWalker with variant options + caller walker options.
+ * - Builds wp_nav_menu() args and returns the generated HTML (string) by default.
+ *
+ * Notes:
+ * - UI strings remain Persian (fa-IR) per request.
+ * - If 'echo' is set to true in options, wp_nav_menu() will print directly;
+ *   however this method still returns wp_nav_menu()'s return value.
+ *
+ * @package jamal13647850\wphelpers\Components\Menu\Variants
  */
 final class SimpleMenu extends AbstractMenu
 {
     /**
-     * Get the default options for this menu variant.
+     * Default options for the simple menu variant.
      *
-     * @return array
+     * Keys:
+     * - menu_id (string): <ul> id attribute.
+     * - menu_class (string): classes for the <ul>.
+     * - aria_label (string): localized aria-label for the <ul> (Persian).
+     * - items_wrap (string): format string used by wp_nav_menu().
+     *   Must include %1$s (id), %2$s (class), and %3$s (items).
+     *   This template also contains an extra `%s` placeholder reserved for the
+     *   aria-label that is injected via sprintf() before passing to wp_nav_menu().
+     * - echo (bool): whether wp_nav_menu() echoes directly.
+     * - fallback_cb (bool|callable): fallback callback for wp_nav_menu().
+     * - simple_link_class (string): link classes passed to SimpleWalker.
      *
-     * Defaults:
-     *   - 'menu_id'      (string)  Unique DOM id for the menu.
-     *   - 'menu_class'   (string)  Classes applied to the root <ul>.
-     *   - 'aria_label'   (string)  Accessible label for nav element (in fa-IR).
-     *   - 'items_wrap'   (string)  Markup template for the items container.
-     *   - 'echo'         (bool)    Whether to echo or return HTML.
-     *   - 'fallback_cb'  (bool)    Disable fallback if menu not assigned.
+     * @return array<string, mixed>
      */
     protected static function defaultOptions(): array
     {
         return [
-            'menu_id'     => 'top-menu',
-            'menu_class'  => 'flex items-center space-x-1 sm:space-x-2 lg:space-x-4',
-            'aria_label'  => 'ناوبری بالایی', // Persian (fa-IR) for "Top Navigation"
-            'items_wrap'  => '<ul id="%1$s" class="%2$s" aria-label="%s">%3$s</ul>',
-            'echo'        => false,
-            'fallback_cb' => false,
+            'menu_id'           => 'top-menu',
+            'menu_class'        => 'flex items-center space-x-1 sm:space-x-2 lg:space-x-4',
+            'aria_label'        => 'ناوبری بالایی',
+            'items_wrap'        => '<ul id="%1$s" class="%2$s" aria-label="%s">%3$s</ul>',
+            'echo'              => false,
+            'fallback_cb'       => false,
+            // SimpleWalker-specific configuration
+            'simple_link_class' => 'text-secondary hover:text-primary transition-colors text-nowrap',
         ];
     }
 
     /**
-     * Render the simple (horizontal) menu.
+     * Render the simple menu for a given theme location.
      *
-     * @param string $themeLocation   The WordPress theme menu location.
-     * @param array  $options         Variant-specific menu options (optional).
-     * @param array  $walkerOptions   Options for the walker (optional).
+     * Preconditions:
+     * - The $themeLocation must correspond to a registered WordPress menu location.
      *
-     * @return string                 The rendered menu HTML.
+     * Side Effects:
+     * - If 'echo' is true in options, output is printed by wp_nav_menu().
+     *
+     * @param string               $themeLocation  WordPress theme location slug (e.g., 'primary').
+     * @param array<string, mixed> $options        Optional menu options to override defaults.
+     * @param array<string, mixed> $walkerOptions  Optional SimpleWalker options to override variant options.
+     *
+     * @return string HTML markup generated by wp_nav_menu().
      *
      * @example
-     *   echo (new SimpleMenu())->render('top-menu');
+     * $menu = new \jamal13647850\wphelpers\Components\Menu\Variants\SimpleMenu();
+     * echo $menu->render('primary', [
+     *     'menu_id'    => 'main-nav',
+     *     'menu_class' => 'flex gap-4',
+     *     'echo'       => false,
+     * ], [
+     *     // Walker overrides
+     *     'simple_link_class' => 'text-gray-700 hover:text-black',
+     * ]);
      */
     public function render(
         string $themeLocation,
@@ -70,17 +98,33 @@ final class SimpleMenu extends AbstractMenu
         array $walkerOptions = []
     ): string {
         $opts = $this->makeOptions($options);
-        $args = $opts->toArray();
-        $args['theme_location'] = $themeLocation;
-        $args['walker'] = $this->makeWalker('simple', $walkerOptions);
 
-        // Compose the items_wrap with Persian aria-label (already translated)
-        $args['items_wrap'] = sprintf(
-            $opts->get('items_wrap'),
-            esc_attr__($opts->get('aria_label'), 'your-theme-textdomain')
+        // Variant options consumed by SimpleWalker
+        $walkerVariantOptions = [
+            'simple_link_class' => (string) $opts->get('simple_link_class'),
+        ];
+
+        $args = [
+            'theme_location' => $themeLocation,
+            'menu_id'        => (string) $opts->get('menu_id'),
+            'menu_class'     => (string) $opts->get('menu_class'),
+            'container'      => false,
+            'fallback_cb'    => (bool) $opts->get('fallback_cb'),
+            'echo'           => (bool) $opts->get('echo'),
+        ];
+
+        // Use the specialized SimpleWalker
+        $args['walker'] = new SimpleWalker(
+            array_merge($walkerVariantOptions, $walkerOptions)
         );
 
-        /** @psalm-suppress UndefinedFunction */
+        // Inject localized aria-label (fa-IR) into items_wrap.
+        // The numbered placeholders (%1$s, %2$s, %3$s) are left intact for wp_nav_menu() to fill.
+        $args['items_wrap'] = sprintf(
+            (string) $opts->get('items_wrap'),
+            esc_attr__((string) $opts->get('aria_label'), 'your-theme-textdomain')
+        );
+
         return (string) wp_nav_menu($args);
     }
 }
