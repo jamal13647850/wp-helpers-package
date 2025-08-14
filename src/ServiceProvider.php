@@ -34,6 +34,7 @@ use jamal13647850\wphelpers\Components\Menu\Variants\DesktopMenu;
 
 use jamal13647850\wphelpers\Components\Menu\Variants\MultiColumnDesktopMenu;
 use jamal13647850\wphelpers\Components\Menu\Variants\OverlayMobileMenu;
+use jamal13647850\wphelpers\Components\Menu\Variants\OverlayMobileWithToggle;
 use jamal13647850\wphelpers\Components\Menu\MenuCacheManager;
 use jamal13647850\wphelpers\Utilities\Clear_Theme_Cache;
 
@@ -96,6 +97,7 @@ final class ServiceProvider
        
         MenuManager::register('multi-column-desktop', MultiColumnDesktopMenu::class);
         MenuManager::register('overlay-mobile',     OverlayMobileMenu::class);
+        MenuManager::register('overlay-mobile-with-toggle', OverlayMobileWithToggle::class); // ← جدید
 
         add_action('wp_update_nav_menu',         [MenuCacheManager::getInstance(), 'purgeAll'], 99);
         add_action('wp_delete_nav_menu',         [MenuCacheManager::getInstance(), 'purgeAll'], 99);

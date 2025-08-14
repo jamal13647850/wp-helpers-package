@@ -8,22 +8,8 @@ Sayyed Jamal Ghasemi — Full-Stack Developer
 */
 
 /* ===== FILE: assets/menu/overlay-mobile.css ===== */
-/* Mobile Navigation Menu with Multi-level Accordion Support */
 
-/**
- * Main mobile menu container
- * 
- * Creates an overlay dropdown menu that appears below the header
- * with smooth animations and modern styling. The menu supports
- * multi-level navigation with accordion-style expansion.
- * 
- * Features:
- * - Smooth slide-down animation with opacity transition
- * - Rounded bottom corners for modern appearance
- * - Subtle shadow for depth perception
- * - Scrollable content when exceeding viewport height
- * - High z-index to ensure proper layering
- */
+/* Mobile overlay menu panel */
 .mobile-menu {
     position: absolute;
     top: 100%;
@@ -43,41 +29,18 @@ Sayyed Jamal Ghasemi — Full-Stack Developer
     overflow-y: auto;
 }
 
-/**
- * Active state for mobile menu
- * 
- * When toggled, the menu becomes visible with smooth animation.
- * Uses opacity, visibility, and transform for optimal performance.
- */
 .mobile-menu.active {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
 }
 
-/**
- * Individual menu item container
- * 
- * Each menu item is separated by a subtle border to create
- * visual hierarchy and improve readability.
- */
+/* Menu item container */
 .mobile-menu-item {
     border-bottom: 1px solid rgba(117, 212, 208, 1);
 }
 
-/**
- * Clickable title/header for accordion sections
- * 
- * Styled as a button for accessibility and interaction.
- * Includes gradient background for visual appeal and proper
- * spacing for touch targets on mobile devices.
- * 
- * Features:
- * - Full-width clickable area
- * - Gradient background matching theme colors
- * - Proper spacing for icons and text
- * - Custom font family (Kalameh) with fallbacks
- */
+/* Menu title/header button */
 .mobile-menu-title {
     appearance: none;
     background: linear-gradient(135deg, rgba(117, 212, 208, 0.1), rgba(133, 193, 233, 0.1));
@@ -95,40 +58,18 @@ Sayyed Jamal Ghasemi — Full-Stack Developer
     cursor: pointer;
 }
 
-/**
- * Icon styling within menu titles
- * 
- * Ensures consistent icon sizing and proper spacing
- * relative to text content.
- */
 .mobile-menu-title i {
     margin-inline-end: 8px;
     font-size: 1rem;
     line-height: 1;
 }
 
-/**
- * Accordion caret/arrow indicator
- * 
- * Smooth rotation animation when accordion expands/collapses.
- * Flex-shrink prevents the icon from being compressed.
- */
 .mobile-menu-caret {
     transition: transform 0.25s ease;
     flex-shrink: 0;
 }
 
-/**
- * Submenu container for accordion items
- * 
- * Uses max-height animation technique for smooth expand/collapse.
- * Light background differentiates submenu from main menu items.
- * 
- * Animation approach:
- * - max-height: Controls the visible height during expansion
- * - opacity: Provides fade-in/out effect
- * - overflow: hidden prevents content spillover during animation
- */
+/* Accordion submenu container */
 .mobile-submenu {
     background: #f8f9fa;
     overflow: hidden;
@@ -137,15 +78,7 @@ Sayyed Jamal Ghasemi — Full-Stack Developer
     transition: max-height 0.3s ease, opacity 0.3s ease;
 }
 
-/**
- * Submenu links and general menu links
- * 
- * Consistent styling for all clickable menu items with:
- * - Flex layout for proper icon/text alignment
- * - Hover effects with color transition and subtle indentation
- * - Touch-friendly padding for mobile interaction
- * - Theme-consistent colors and typography
- */
+/* Menu links */
 .mobile-submenu-link,
 .mobile-menu-link {
     display: flex;
@@ -159,12 +92,6 @@ Sayyed Jamal Ghasemi — Full-Stack Developer
     border-bottom: 1px solid rgba(117, 212, 208, 1);
 }
 
-/**
- * Text spans within menu links
- * 
- * Consistent typography for link text content.
- * Submenu links are slightly smaller than main menu links.
- */
 .mobile-submenu-link span,
 .mobile-menu-link span {
     display: inline-block;
@@ -177,11 +104,6 @@ Sayyed Jamal Ghasemi — Full-Stack Developer
     font-size: 15px;
 }
 
-/**
- * Icon styling within links
- * 
- * Consistent sizing and positioning for all menu icons.
- */
 .mobile-submenu-link i,
 .mobile-menu-link i {
     font-size: 1rem;
@@ -189,15 +111,6 @@ Sayyed Jamal Ghasemi — Full-Stack Developer
     margin-inline-start: 2px;
 }
 
-/**
- * Hover effects for interactive elements
- * 
- * Submenu links: Light background with theme color and subtle slide
- * Main menu links: Gradient background with theme color and slide
- * 
- * The padding-inline-start animation creates a subtle slide effect
- * that enhances the user experience.
- */
 .mobile-submenu-link:hover {
     background: rgba(117, 212, 208, 0.1);
     color: #75d4d0;
@@ -210,29 +123,13 @@ Sayyed Jamal Ghasemi — Full-Stack Developer
     padding-inline-start: 25px;
 }
 
-/**
- * Active state styling for current page/section
- * 
- * Highlights the current active menu item with theme color
- * and bold font weight for clear navigation feedback.
- */
 .mobile-menu-link.is-active,
 .mobile-submenu-link.is-active {
     color: #75d4d0;
     font-weight: 700;
 }
 
-/**
- * Multi-level indentation system
- * 
- * Creates visual hierarchy through progressive indentation
- * based on menu depth levels (level-0, level-1, level-2).
- * 
- * Each level increases indentation and slightly reduces font size
- * to maintain readability while showing hierarchy.
- */
-
-/* Level 0 - Top level items */
+/* Depth-based indentation (level-*) */
 .mobile-menu-title.level-0 {
     padding-inline-start: 20px;
 }
@@ -242,7 +139,6 @@ Sayyed Jamal Ghasemi — Full-Stack Developer
     padding-inline-start: 28px;
 }
 
-/* Level 1 - Second level items */
 .mobile-menu-title.level-1 {
     padding-inline-start: 28px;
     font-size: 15px;
@@ -253,7 +149,6 @@ Sayyed Jamal Ghasemi — Full-Stack Developer
     padding-inline-start: 36px;
 }
 
-/* Level 2 - Third level items */
 .mobile-menu-title.level-2 {
     padding-inline-start: 36px;
     font-size: 14.5px;
@@ -264,21 +159,41 @@ Sayyed Jamal Ghasemi — Full-Stack Developer
     padding-inline-start: 44px;
 }
 
-/* Additional levels can be added following the same pattern:
- * - Increase padding-inline-start by 8px
- * - Decrease font-size by 0.5px
- * - Maintain consistent visual hierarchy
- */
+/* Hamburger menu button */
+.mobile-menu-btn {
+    display: inline-flex;
+    flex-direction: column;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    gap: 4px;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
 
-/**
- * Responsive design for smaller screens
- * 
- * Optimizations for devices with limited screen width:
- * - Reduced border radius for edge-to-edge appearance
- * - Smaller font sizes for better content fit
- * - Reduced padding to maximize content area
- * - Maintains touch-friendly target sizes
- */
+.mobile-menu-btn:hover {
+    background: rgba(117, 212, 208, 0.1);
+}
+
+.mobile-menu-btn:focus-visible {
+    outline: 2px solid #75D4D0;
+    outline-offset: 2px;
+}
+
+.mobile-menu-btn span {
+    width: 25px;
+    height: 3px;
+    background: #2c3e50;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-btn:hover span {
+    background: #75d4d0;
+}
+
+/* Responsive design */
 @media (max-width: 480px) {
     .mobile-menu {
         border-radius: 0 0 15px 15px;

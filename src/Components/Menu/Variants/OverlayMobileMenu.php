@@ -1,12 +1,13 @@
 <?php
-/**
- * Sayyed Jamal Ghasemi — Full-Stack Developer
- * 📧 info@jamalghasemi.com
- * 🔗 LinkedIn: https://www.linkedin.com/in/jamal1364/
- * 📸 Instagram: https://www.instagram.com/jamal13647850
- * 💬 Telegram: https://t.me/jamal13647850
- * 🌐 https://jamalghasemi.com
- */
+
+/*
+Sayyed Jamal Ghasemi — Full-Stack Developer  
+📧 info@jamalghasemi.com  
+🔗 LinkedIn: https://www.linkedin.com/in/jamal1364/  
+📸 Instagram: https://www.instagram.com/jamal13647850  
+💬 Telegram: https://t.me/jamal13647850  
+🌐 https://jamalghasemi.com  
+*/
 
 declare(strict_types=1);
 
@@ -15,132 +16,201 @@ namespace jamal13647850\wphelpers\Components\Menu\Variants;
 use jamal13647850\wphelpers\Components\Menu\AbstractMenu;
 use jamal13647850\wphelpers\Navigation\OverlayMobileWalker;
 
-// Ensure WordPress is loaded before executing this file
 defined('ABSPATH') || exit();
 
 /**
- * OverlayMobileMenu Class
+ * OverlayMobileMenu - Mobile overlay menu component implementation
  * 
- * Renders an overlay-style mobile navigation menu for WordPress themes.
- * This component creates a full-screen mobile menu with Alpine.js integration
- * for smooth accordion-style interactions and responsive behavior.
+ * A concrete implementation of AbstractMenu that creates mobile-optimized overlay menus
+ * with Alpine.js integration for smooth animations and accessibility features.
+ * 
+ * This component automatically handles:
+ * - CSS asset loading with cache-busting
+ * - Alpine.js data binding for mobile menu states
+ * - ARIA accessibility attributes
+ * - Custom walker integration for accordion functionality
+ * - Responsive design considerations
  * 
  * Features:
- * - Alpine.js powered accordion navigation
- * - Customizable container styling and attributes
- * - Support for menu icons and SVG carets
- * - Classic or independent accordion modes
- * - Configurable depth levels
- * - Accessibility features (ARIA labels, keyboard navigation)
+ * - Overlay-style mobile menu with backdrop
+ * - Accordion submenu navigation
+ * - FontAwesome icon support
+ * - Keyboard navigation (ESC to close)
+ * - Click-outside-to-close functionality
+ * - Automatic CSS enqueuing with file modification timestamps
  * 
  * Usage Example:
  * ```php
  * $mobileMenu = new OverlayMobileMenu();
- * echo $mobileMenu->render('primary-menu', [
- *     'container_class' => 'my-mobile-menu',
+ * echo $mobileMenu->render('primary', [
+ *     'accordion_mode' => 'independent',
  *     'max_depth' => 3
  * ]);
  * ```
  * 
+ * Required CSS Structure:
+ * The component expects CSS at: `/assets/menu/overlay-mobile.css` in the active theme
+ * 
  * @package jamal13647850\wphelpers\Components\Menu\Variants
  * @since 1.0.0
- * @final This class should not be extended
+ * @author Sayyed Jamal Ghasemi
+ * @see OverlayMobileWalker For the custom navigation walker implementation
+ * @see AbstractMenu For the base menu component architecture
  */
 final class OverlayMobileMenu extends AbstractMenu
 {
     /**
-     * Get default configuration options for the overlay mobile menu
+     * Define default configuration options for the mobile overlay menu
      * 
-     * Defines the standard settings used when no custom options are provided.
-     * These defaults ensure consistent behavior and styling across implementations.
+     * Provides sensible defaults for all configurable aspects of the mobile menu,
+     * including styling classes, Alpine.js bindings, accessibility labels, and
+     * walker-specific options.
      * 
-     * Option Details:
-     * - container_id: HTML ID attribute for the menu container
-     * - container_class: CSS classes applied to the menu container
-     * - aria_label: Accessibility label for screen readers (Persian)
-     * - mobile_link_class: CSS class for top-level menu links
-     * - mobile_submenu_class: CSS class for submenu/dropdown links
-     * - enable_icons: Whether to display menu item icons
-     * - caret_svg: Enable SVG caret icons for dropdowns
-     * - accordion_mode: 'classic' (single open) or 'independent' (multiple open)
-     * - max_depth: Maximum nesting levels for menu hierarchy (1-5 recommended)
-     * - alpine_xdata: Alpine.js state initialization for accordion behavior
-     * - alpine_bind: Alpine.js directives for show/hide and event handling
-     * 
-     * @return array<string, mixed> Default configuration array
-     * @since 1.0.0
-     */
-    protected static function defaultOptions(): array
-    {
-        return [
-            'container_id'          => 'mobile-menu',
-            'container_class'       => 'mobile-menu',
-            'aria_label'            => 'منوی موبایل',
-            'mobile_link_class'     => 'mobile-menu-link',
-            'mobile_submenu_class'  => 'mobile-submenu-link',
-            'enable_icons'          => true,
-            'caret_svg'             => true,
-            'accordion_mode'        => 'classic', // 'classic' | 'independent'
-            'max_depth'             => 5,
-            'theme_location'        => '',
-            'fallback_cb'           => false,
-            'echo'                  => false,
-            // Local state for classic accordion (opens) without affecting external mobileMenuOpen variable
-            'alpine_xdata'          => 'x-data="{ opens: {} }"',
-            // Show/hide entire panel with escape key and outside click handlers
-            'alpine_bind'           => "x-cloak x-bind:class=\"{ 'active': mobileMenuOpen }\" @keyup.escape.window=\"mobileMenuOpen=false\" @click.outside=\"mobileMenuOpen=false\"",
-        ];
-    }
-
-    /**
-     * Render the overlay mobile menu HTML
-     * 
-     * Generates a complete mobile navigation menu with Alpine.js integration,
-     * using WordPress's wp_nav_menu() function and a custom walker class.
-     * The output includes accessibility features and responsive behavior.
-     * 
-     * Process Flow:
-     * 1. Merge provided options with defaults
-     * 2. Configure wp_nav_menu arguments with custom walker
-     * 3. Generate menu HTML using WordPress navigation system
-     * 4. Wrap in container div with Alpine.js attributes
-     * 5. Return complete HTML string for output
-     * 
-     * @param string $themeLocation WordPress theme location identifier (registered with register_nav_menus)
-     * @param array<string, mixed> $options Custom configuration options to override defaults
-     * @param array<string, mixed> $walkerOptions Additional options passed to OverlayMobileWalker (currently unused)
-     * 
-     * @return string Complete HTML markup for the mobile menu
-     * 
-     * @throws \InvalidArgumentException If theme location is empty or invalid
+     * @return array<string,mixed> Associative array of default option values
      * @since 1.0.0
      * 
      * @example
      * ```php
-     * // Basic usage with default options
-     * $menu = new OverlayMobileMenu();
-     * echo $menu->render('primary-menu');
-     * 
-     * // Advanced usage with custom options
-     * echo $menu->render('primary-menu', [
-     *     'container_class' => 'custom-mobile-menu',
-     *     'accordion_mode' => 'independent',
-     *     'max_depth' => 3,
-     *     'enable_icons' => false
+     * $defaults = OverlayMobileMenu::defaultOptions();
+     * // Override specific options while keeping defaults
+     * $customOptions = array_merge($defaults, [
+     *     'max_depth' => 2,
+     *     'accordion_mode' => 'independent'
      * ]);
+     * ```
+     */
+    protected static function defaultOptions(): array
+    {
+        return [
+            // Container HTML attributes
+            'container_id'          => 'mobile-menu',           // Main container element ID
+            'container_class'       => 'mobile-menu',           // Main container CSS classes
+            'aria_label'            => 'منوی موبایل',            // Persian: "Mobile Menu" for screen readers
+            
+            // Walker configuration options
+            'mobile_link_class'     => 'mobile-menu-link',      // CSS class for top-level menu links
+            'mobile_submenu_class'  => 'mobile-submenu-link',   // CSS class for submenu links
+            'enable_icons'          => true,                    // Enable FontAwesome icon rendering
+            'caret_svg'             => true,                    // Show dropdown caret indicators
+            'accordion_mode'        => 'classic',               // 'classic' | 'independent' accordion behavior
+            'max_depth'             => 5,                       // Maximum menu nesting depth
+            
+            // WordPress menu configuration
+            'theme_location'        => '',                      // WordPress menu location identifier
+            'fallback_cb'           => false,                   // Callback when no menu is assigned
+            'echo'                  => false,                   // Return output instead of echoing
+            
+            // Alpine.js data and behavior bindings
+            'alpine_xdata'          => 'x-data="{ opens: {} }"',                    // Initialize Alpine.js state tracking
+            'alpine_bind'           => "x-cloak x-bind:class=\"{ 'active': mobileMenuOpen }\" @keyup.escape.window=\"mobileMenuOpen=false\" @click.outside=\"mobileMenuOpen=false\"", // Reactive behaviors
+        ];
+    }
+
+    /**
+     * Define required CSS and JavaScript assets for the mobile menu
+     * 
+     * Automatically generates asset URLs with cache-busting based on file modification times.
+     * Follows WordPress theme structure conventions for asset organization.
+     * 
+     * Expected file location: `/assets/menu/overlay-mobile.css` within the active theme directory
+     * 
+     * @return array<string,array> Asset configuration arrays for styles and scripts
+     * @since 1.0.0
+     * 
+     * Cache-busting strategy:
+     * - Uses filemtime() to generate version numbers
+     * - Ensures browsers reload CSS when files are updated
+     * - Falls back to null version if file doesn't exist
+     * 
+     * @example
+     * ```php
+     * $assets = OverlayMobileMenu::assets();
+     * // Returns:
+     * // [
+     * //     'styles' => [['handle' => 'overlay-mobile-menu', ...]],
+     * //     'scripts' => []
+     * // ]
+     * ```
+     */
+    protected static function assets(): array
+    {
+        // Define relative path to CSS file within theme structure
+        $rel  = '/assets/menu/overlay-mobile.css';
+        $src  = get_stylesheet_directory_uri() . $rel;  // Public URL for browser loading
+        $file = get_stylesheet_directory() . $rel;      // Server file path for existence check
+        
+        // Generate cache-busting version number from file modification time
+        $ver  = file_exists($file) ? (string) filemtime($file) : null;
+
+        return [
+            'styles' => [
+                [
+                    'handle' => 'overlay-mobile-menu',   // WordPress style handle for dependency management
+                    'src'    => $src,                    // Public CSS file URL
+                    'deps'   => [],                      // No CSS dependencies
+                    'ver'    => $ver,                    // Cache-busting version
+                    'media'  => 'all',                   // Apply to all media types
+                ],
+            ],
+            'scripts' => [], // No JavaScript files required (using Alpine.js from theme)
+        ];
+    }
+
+    /**
+     * Render the complete mobile overlay menu HTML structure
+     * 
+     * Orchestrates the entire menu rendering process including:
+     * 1. Asset enqueuing with cache-busting
+     * 2. Option merging and validation
+     * 3. WordPress menu generation with custom walker
+     * 4. Alpine.js integration and accessibility attributes
+     * 5. Final HTML container assembly
+     * 
+     * @param string $themeLocation WordPress theme location identifier for the menu
+     * @param array  $options       Optional configuration overrides for this render call
+     * @param array  $walkerOptions Optional configuration overrides passed directly to OverlayMobileWalker
+     * @return string Complete HTML markup for the mobile overlay menu
+     * @since 1.0.0
+     * 
+     * @example
+     * ```php
+     * // Basic usage with theme location
+     * echo $menu->render('primary');
+     * 
+     * // With custom options
+     * echo $menu->render('primary', [
+     *     'max_depth' => 2,
+     *     'container_class' => 'custom-mobile-menu'
+     * ]);
+     * 
+     * // With walker-specific options
+     * echo $menu->render('primary', [], [
+     *     'accordion_mode' => 'independent'
+     * ]);
+     * ```
+     * 
+     * HTML Structure:
+     * ```html
+     * <div id="mobile-menu" class="mobile-menu" role="dialog" 
+     *      aria-label="منوی موبایل" x-data="{opens:{}}" x-cloak ...>
+     *   <!-- Generated menu items via OverlayMobileWalker -->
+     * </div>
      * ```
      */
     public function render(string $themeLocation, array $options = [], array $walkerOptions = []): string
     {
-        // Merge custom options with class defaults
+        // Ensure CSS assets are loaded before rendering
+        $this->enqueueAssets();
+        
+        // Merge provided options with defaults
         $opts = $this->makeOptions($options);
-
-        // Configure WordPress navigation menu arguments
+        
+        // Configure WordPress wp_nav_menu arguments
         $args = [
-            'theme_location' => $themeLocation,
-            'container'      => false,
-            'items_wrap'     => '%3$s', // Output menu items without wrapping <ul>/<li>
-            'walker'         => new OverlayMobileWalker([
+            'theme_location' => $themeLocation,                 // WordPress menu location to render
+            'container'      => false,                          // Disable default <div> wrapper
+            'items_wrap'     => '%3$s',                         // Output only menu items without <ul>/<li>
+            'walker'         => new OverlayMobileWalker([       // Custom walker for mobile-optimized markup
                 'mobile_link_class'     => (string) $opts->get('mobile_link_class'),
                 'mobile_submenu_class'  => (string) $opts->get('mobile_submenu_class'),
                 'enable_icons'          => (bool)   $opts->get('enable_icons'),
@@ -148,25 +218,22 @@ final class OverlayMobileMenu extends AbstractMenu
                 'accordion_mode'        => (string) $opts->get('accordion_mode'),
                 'max_depth'             => (int)    $opts->get('max_depth'),
             ]),
-            'fallback_cb'    => (bool) $opts->get('fallback_cb'),
-            'echo'           => false, // Return HTML instead of echoing directly
+            'fallback_cb'    => (bool) $opts->get('fallback_cb'), // Disable fallback when no menu assigned
+            'echo'           => false,                             // Return HTML instead of echoing
         ];
-
-        // Generate the menu HTML using WordPress navigation system
+        
+        // Generate the menu HTML using WordPress core functionality
         $menuHtml = (string) wp_nav_menu($args);
-
-        // Create container with internal state for classic accordion behavior
-        // Alpine.js handles show/hide animations and keyboard/mouse interactions
-        $container = sprintf(
+        
+        // Assemble final container with Alpine.js bindings and accessibility attributes
+        return sprintf(
             '<div id="%s" class="%s" role="dialog" aria-label="%s" %s %s>%s</div>',
-            esc_attr((string) $opts->get('container_id')),
-            esc_attr((string) $opts->get('container_class')),
-            esc_attr((string) $opts->get('aria_label')),
-            (string) $opts->get('alpine_xdata'),
-            (string) $opts->get('alpine_bind'),
-            $menuHtml
+            esc_attr((string) $opts->get('container_id')),    // Unique container ID
+            esc_attr((string) $opts->get('container_class')), // Container CSS classes
+            esc_attr((string) $opts->get('aria_label')),      // Accessibility label (Persian)
+            (string) $opts->get('alpine_xdata'),              // Alpine.js data initialization
+            (string) $opts->get('alpine_bind'),               // Alpine.js reactive behaviors
+            $menuHtml                                         // Generated menu content
         );
-
-        return $container;
     }
 }
