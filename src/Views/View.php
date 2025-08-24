@@ -51,7 +51,7 @@ class View
         ];
         
         // Add custom paths from config
-        $custom_paths = Config::get('twig.paths..custom', []);
+        $custom_paths = Config::get('twig.paths.custom', []);
         foreach ($custom_paths as $namespace => $path) {
             $this->paths[$namespace] = $path;
         }
