@@ -1,0 +1,57 @@
+{# templates/header.twig - مثال template ساده با WordPress Helpers #}
+<!DOCTYPE html>
+<html {{ language_attributes() }} dir="rtl">
+<head>
+    <meta charset="{{ bloginfo('charset') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{ wp_head() }}
+</head>
+<body {{ body_class() }}>
+
+<header class="site-header">
+    <div class="container">
+        <div class="header-content">
+            
+            {# لوگو سایت #}
+            <div class="site-logo">
+                {% set logo = get_theme_option('site_logo') %}
+                {% if logo %}
+                    <img src="{{ logo }}" alt="{{ bloginfo('name') }}" class="logo-img">
+                {% else %}
+                    <h1 class="site-title">
+                        <a href="{{ home_url('/') }}">{{ bloginfo('name') }}</a>
+                    </h1>
+                {% endif %}
+            </div>
+            
+            {# منوی اصلی - استفاده از Menu Component #}
+            <nav class="main-navigation" role="navigation">
+                {{ menu('desktop', 'primary', {
+                    'max_depth': 2,
+                    'enable_mega_menu': true,
+                    'container_class': 'desktop-menu-container',
+                    'menu_class': 'main-menu'
+                })|raw }}
+            </nav>
+            
+            {# منوی موبایل #}
+            <div class="mobile-menu-toggle" x-data="{ open: false }">
+                <button @click="open = !open" class="menu-toggle-btn">
+                    <span class="sr-only">باز کردن منو</span>
+                    <svg class="menu-icon" width="24" height="24" viewBox="0 0 24 24">
+                        <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                </button>
+                
+                <div x-show="open" class="mobile-menu-overlay">
+                    {{ menu('overlay-mobile', 'primary', {
+                        'accordion_mode': 'independent',
+                        'enable_icons': true,
+                        'max_depth': 3
+                    })|raw }}
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</header>

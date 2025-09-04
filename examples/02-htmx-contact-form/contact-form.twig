@@ -1,0 +1,400 @@
+{# فرم تماس با قابلیت‌های پیشرفته HTMX #}
+<div class="contact-form-wrapper" dir="rtl">
+    
+    {# پیام‌های خطا #}
+    <div id="contact-errors" class="errors-container"></div>
+    
+    <form id="contact-form" 
+          hx-post="{{ wp_ajax_url() }}?action=htmx_contact_submit_contact"
+          hx-target="#contact-form"
+          hx-indicator="#loading-indicator"
+          class="contact-form">
+        
+        {# Honeypot برای جلوگیری از spam #}
+        <input type="text" name="website" style="display:none" tabindex="-1" autocomplete="off">
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="contact_name" class="required">نام و نام خانوادگی</label>
+                <input type="text" 
+                       id="contact_name" 
+                       name="name" 
+                       required
+                       maxlength="50"
+                       placeholder="نام خود را وارد کنید"
+                       class="form-control">
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="contact_email" class="required">آدرس ایمیل</label>
+                <input type="email" 
+                       id="contact_email" 
+                       name="email" 
+                       required
+                       placeholder="example@domain.com"
+                       hx-post="{{ wp_ajax_url() }}?action=htmx_contact_validate_email"
+                       hx-trigger="blur changed delay:500ms"
+                       hx-target="next .validation-feedback"
+                       class="form-control">
+                <div class="validation-feedback"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="contact_phone" class="required">شماره تماس</label>
+                <input type="tel" 
+                       id="contact_phone" 
+                       name="phone" 
+                       required
+                       pattern="09[0-9]{9}"
+                       placeholder="09123456789"
+                       maxlength="11"
+                       hx-post="{{ wp_ajax_url() }}?action=htmx_contact_validate_phone"
+                       hx-trigger="blur changed delay:500ms"
+                       hx-target="next .validation-feedback"
+                       class="form-control">
+                <div class="validation-feedback"></div>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="contact_subject" class="required">موضوع پیام</label>
+                <select id="contact_subject" name="subject" required class="form-control">
+                    <option value="">انتخاب موضوع</option>
+                    <option value="سوال عمومی">سوال عمومی</option>
+                    <option value="درخواست همکاری">درخواست همکاری</option>
+                    <option value="گزارش مشکل">گزارش مشکل</option>
+                    <option value="پیشنهاد">پیشنهاد</option>
+                    <option value="سایر موارد">سایر موارد</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="contact_message" class="required">متن پیام</label>
+                <textarea id="contact_message" 
+                          name="message" 
+                          required
+                          rows="6"
+                          minlength="10"
+                          maxlength="1000"
+                          placeholder="پیام خود را اینجا بنویسید..."
+                          class="form-control"></textarea>
+                <small class="character-count">
+                    <span id="char-count">0</span> / 1000 کاراکتر
+                </small>
+            </div>
+        </div>
+        
+        {# کپچا #}
+        <div class="form-row">
+            <div class="form-group captcha-group">
+                <label for="captcha_answer" class="required">کد امنیتی</label>
+                <div id="captcha-container">
+                    {{ captcha('medium')|raw }}
+                </div>
+                <div class="captcha-input-group">
+                    <input type="number" 
+                           id="captcha_answer" 
+                           name="captcha_answer" 
+                           required
+                           placeholder="نتیجه را وارد کنید"
+                           class="form-control captcha-input">
+                    <button type="button" 
+                            hx-post="{{ wp_ajax_url() }}?action=htmx_contact_refresh_captcha"
+                            hx-target="#captcha-container"
+                            class="captcha-refresh-btn"
+                            title="تازه‌سازی کد">
+                        🔄
+                    </button>
+                </div>
+                <input type="hidden" name="captcha_token" value="{{ captcha_token }}">
+            </div>
+        </div>
+        
+        {# دکمه ارسال #}
+        <div class="form-row submit-row">
+            <button type="submit" class="submit-btn" id="contact-submit">
+                <span class="btn-text">ارسال پیام</span>
+                <div id="loading-indicator" class="loading-spinner htmx-indicator">
+                    <svg class="spinner" width="20" height="20" viewBox="0 0 24 24">
+                        <circle class="path" cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="4"></circle>
+                    </svg>
+                </div>
+            </button>
+            
+            <small class="privacy-notice">
+                با ارسال این فرم، شما با 
+                <a href="/privacy-policy" target="_blank">قوانین حریم خصوصی</a> 
+                ما موافقت می‌کنید.
+            </small>
+        </div>
+        
+        {{ wp_nonce_field('contact_form_nonce', '_wpnonce', false) }}
+    </form>
+</div>
+
+{# JavaScript برای بهبود تجربه کاربری #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // شمارش کاراکترهای پیام
+    const messageTextarea = document.getElementById('contact_message');
+    const charCount = document.getElementById('char-count');
+    
+    if (messageTextarea && charCount) {
+        messageTextarea.addEventListener('input', function() {
+            const count = this.value.length;
+            charCount.textContent = count;
+            
+            // تغییر رنگ نزدیک به حد مجاز
+            if (count > 900) {
+                charCount.style.color = '#e74c3c';
+            } else if (count > 800) {
+                charCount.style.color = '#f39c12';
+            } else {
+                charCount.style.color = '#27ae60';
+            }
+        });
+    }
+    
+    // بازنشانی فرم پس از ارسال موفق
+    document.body.addEventListener('resetForm', function() {
+        const form = document.getElementById('contact-form');
+        if (form) {
+            form.reset();
+            charCount.textContent = '0';
+            
+            // پاک کردن پیام‌های validation
+            document.querySelectorAll('.validation-feedback').forEach(el => {
+                el.innerHTML = '';
+            });
+        }
+    });
+    
+    // بهبود validation real-time
+    const emailInput = document.getElementById('contact_email');
+    const phoneInput = document.getElementById('contact_phone');
+    
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function() {
+            // فقط اجازه اعداد
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // محدود کردن به 11 رقم
+            if (this.value.length > 11) {
+                this.value = this.value.slice(0, 11);
+            }
+            
+            // اضافه کردن 09 در صورت عدم وجود
+            if (this.value.length === 10 && this.value.startsWith('9')) {
+                this.value = '0' + this.value;
+            }
+        });
+    }
+    
+    // Disable double submit
+    const form = document.getElementById('contact-form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const submitBtn = document.getElementById('contact-submit');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                setTimeout(() => {
+                    submitBtn.disabled = false;
+                }, 5000);
+            }
+        });
+    }
+});
+</script>
+
+{# CSS برای استایل دهی #}
+<style>
+.contact-form-wrapper {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group label.required::after {
+    content: ' *';
+    color: #e74c3c;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.validation-feedback {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.validation-message.success {
+    color: #27ae60;
+}
+
+.validation-message.error {
+    color: #e74c3c;
+}
+
+.validation-message.warning {
+    color: #f39c12;
+}
+
+.captcha-group .captcha-input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.captcha-input {
+    flex: 1;
+}
+
+.captcha-refresh-btn {
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border: 2px solid #e1e5e9;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.captcha-refresh-btn:hover {
+    background: #e9ecef;
+}
+
+.submit-row {
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.submit-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+.submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.loading-spinner {
+    display: none;
+}
+
+.loading-spinner.htmx-indicator {
+    display: block;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.character-count {
+    display: block;
+    text-align: left;
+    margin-top: 0.25rem;
+    color: #6c757d;
+}
+
+.privacy-notice {
+    color: #6c757d;
+    max-width: 200px;
+}
+
+.privacy-notice a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.errors-container {
+    margin-bottom: 1rem;
+}
+
+.errors-container .error {
+    background: #fee;
+    color: #c33;
+    padding: 1rem;
+    border-radius: 5px;
+    border-left: 4px solid #e74c3c;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .submit-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .privacy-notice {
+        max-width: none;
+        text-align: center;
+    }
+}
+</style>

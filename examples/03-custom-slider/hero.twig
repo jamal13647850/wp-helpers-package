@@ -1,0 +1,487 @@
+{# Template اسلایدر Hero سفارشی #}
+<div class="{{ slider_class }}" id="{{ unique_id }}" dir="rtl">
+    <div class="swiper-container" 
+         data-autoplay="{{ options.autoplay ? 'true' : 'false' }}"
+         data-interval="{{ options.interval }}"
+         data-transition="{{ options.transition }}"
+         data-speed="{{ options.speed }}"
+         data-infinite="{{ options.infinite ? 'true' : 'false' }}"
+         data-pause-hover="{{ options.pause_on_hover ? 'true' : 'false' }}">
+        
+        <div class="swiper-wrapper">
+            {% for slide in slides %}
+                <div class="swiper-slide hero-slide" 
+                     data-text-position="{{ slide.text_position }}"
+                     {% if slide.button_link %}data-slide-link="{{ slide.button_link }}"{% endif %}>
+                    
+                    {# تصویر پس‌زمینه #}
+                    <div class="slide-background">
+                        {% if slide.mobile_image.url %}
+                            {# تصویر موبایل #}
+                            <picture>
+                                <source media="(max-width: 768px)" 
+                                        srcset="{{ slide.mobile_image.url }}">
+                                <img src="{{ slide.image.url }}" 
+                                     alt="{{ slide.image.alt ?: slide.title }}"
+                                     class="slide-image"
+                                     loading="lazy">
+                            </picture>
+                        {% else %}
+                            <img src="{{ slide.image.url }}" 
+                                 alt="{{ slide.image.alt ?: slide.title }}"
+                                 class="slide-image"
+                                 loading="lazy">
+                        {% endif %}
+                        
+                        {# overlay #}
+                        <div class="slide-overlay" 
+                             style="opacity: {{ slide.overlay_opacity / 100 }}"></div>
+                    </div>
+                    
+                    {# محتوای متنی #}
+                    <div class="slide-content">
+                        <div class="container">
+                            <div class="slide-text-wrapper text-{{ slide.text_position }}"
+                                 style="color: {{ slide.text_color }}">
+                                
+                                {% if slide.subtitle %}
+                                    <div class="slide-subtitle" 
+                                         data-swiper-parallax="-100"
+                                         data-swiper-parallax-duration="600">
+                                        {{ slide.subtitle }}
+                                    </div>
+                                {% endif %}
+                                
+                                {% if slide.title %}
+                                    <h1 class="slide-title" 
+                                        data-swiper-parallax="-200"
+                                        data-swiper-parallax-duration="700">
+                                        {{ slide.title }}
+                                    </h1>
+                                {% endif %}
+                                
+                                {% if slide.description %}
+                                    <div class="slide-description" 
+                                         data-swiper-parallax="-300"
+                                         data-swiper-parallax-duration="800">
+                                        {{ slide.description|raw }}
+                                    </div>
+                                {% endif %}
+                                
+                                {% if slide.button_text and slide.button_link %}
+                                    <div class="slide-action" 
+                                         data-swiper-parallax="-400"
+                                         data-swiper-parallax-duration="900">
+                                        <a href="{{ slide.button_link }}" 
+                                           class="slide-button btn btn-primary"
+                                           {% if slide.button_link starts with 'http' %}target="_blank" rel="noopener"{% endif %}>
+                                            <span class="btn-text">{{ slide.button_text }}</span>
+                                            <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24">
+                                                <path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                {% endif %}
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        {# Navigation dots #}
+        {% if options.dots %}
+            <div class="swiper-pagination"></div>
+        {% endif %}
+        
+        {# Navigation arrows #}
+        {% if options.arrows %}
+            <div class="swiper-button-next">
+                <svg width="24" height="24" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/>
+                </svg>
+            </div>
+            <div class="swiper-button-prev">
+                <svg width="24" height="24" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"/>
+                </svg>
+            </div>
+        {% endif %}
+        
+        {# Progress bar #}
+        {% if options.autoplay %}
+            <div class="swiper-progress-bar">
+                <span class="progress-fill"></span>
+            </div>
+        {% endif %}
+        
+    </div>
+    
+    {# Scroll indicator #}
+    <div class="scroll-indicator" aria-hidden="true">
+        <div class="scroll-text">اسکرول کنید</div>
+        <div class="scroll-arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/>
+            </svg>
+        </div>
+    </div>
+</div>
+
+{# JavaScript initialization #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sliderElement = document.getElementById('{{ unique_id }}');
+    if (!sliderElement || typeof Swiper === 'undefined') return;
+    
+    const container = sliderElement.querySelector('.swiper-container');
+    const options = {
+        loop: {{ options.infinite ? 'true' : 'false' }},
+        speed: {{ options.speed }},
+        direction: 'horizontal',
+        effect: '{{ options.transition }}',
+        parallax: true,
+        
+        {% if options.autoplay %}
+        autoplay: {
+            delay: {{ options.interval }},
+            pauseOnMouseEnter: {{ options.pause_on_hover ? 'true' : 'false' }},
+            disableOnInteraction: false
+        },
+        {% endif %}
+        
+        {% if options.dots %}
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+            bulletClass: 'hero-pagination-bullet',
+            bulletActiveClass: 'hero-pagination-bullet-active',
+            renderBullet: function (index, className) {
+                return '<span class="' + className + '" data-slide="' + (index + 1) + '"></span>';
+            }
+        },
+        {% endif %}
+        
+        {% if options.arrows %}
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev'
+        },
+        {% endif %}
+        
+        // Responsive breakpoints
+        breakpoints: {
+            640: {
+                slidesPerView: 1,
+                spaceBetween: 0
+            },
+            768: {
+                slidesPerView: 1,
+                spaceBetween: 0
+            },
+            1024: {
+                slidesPerView: 1,
+                spaceBetween: 0
+            }
+        },
+        
+        // Event callbacks
+        on: {
+            init: function() {
+                // Progress bar animation
+                if ({{ options.autoplay ? 'true' : 'false' }}) {
+                    updateProgressBar(this);
+                }
+                
+                // Trigger custom event
+                sliderElement.dispatchEvent(new CustomEvent('heroSliderInit', {
+                    detail: { swiper: this }
+                }));
+            },
+            
+            slideChange: function() {
+                if ({{ options.autoplay ? 'true' : 'false' }}) {
+                    updateProgressBar(this);
+                }
+                
+                // Update URL hash if needed
+                const activeSlide = this.slides[this.activeIndex];
+                const slideLink = activeSlide?.dataset.slideLink;
+                if (slideLink && slideLink.includes('#')) {
+                    // Don't actually change the URL, just for analytics
+                    if (typeof gtag !== 'undefined') {
+                        gtag('event', 'slide_change', {
+                            event_category: 'hero_slider',
+                            event_label: slideLink
+                        });
+                    }
+                }
+            },
+            
+            autoplayStart: function() {
+                const progressBar = sliderElement.querySelector('.progress-fill');
+                if (progressBar) {
+                    progressBar.style.animationDuration = {{ options.interval }}ms;
+                }
+            }
+        }
+    };
+    
+    // Initialize Swiper
+    const swiper = new Swiper(container, options);
+    
+    // Progress bar update function
+    function updateProgressBar(swiper) {
+        const progressBar = sliderElement.querySelector('.progress-fill');
+        if (progressBar && {{ options.autoplay ? 'true' : 'false' }}) {
+            progressBar.style.animation = 'none';
+            progressBar.offsetHeight; // Trigger reflow
+            progressBar.style.animation = 'progressFill {{ options.interval }}ms linear';
+        }
+    }
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft') swiper.slideNext();
+        if (e.key === 'ArrowRight') swiper.slidePrev();
+    });
+    
+    // Touch gestures for mobile
+    let touchStartY = 0;
+    sliderElement.addEventListener('touchstart', function(e) {
+        touchStartY = e.touches[0].clientY;
+    });
+    
+    sliderElement.addEventListener('touchend', function(e) {
+        const touchEndY = e.changedTouches[0].clientY;
+        const diff = touchStartY - touchEndY;
+        
+        // Swipe down to scroll page
+        if (diff < -50) {
+            window.scrollTo({
+                top: sliderElement.offsetHeight,
+                behavior: 'smooth'
+            });
+        }
+    });
+    
+    // Intersection Observer for lazy loading
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src || img.src;
+                    img.classList.remove('lazy');
+                    observer.unobserve(img);
+                }
+            });
+        });
+        
+        sliderElement.querySelectorAll('img[data-src]').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
+});
+</script>
+
+{# CSS Animation keyframes #}
+<style>
+@keyframes progressFill {
+    from { width: 0%; }
+    to { width: 100%; }
+}
+
+.hero-slider {
+    position: relative;
+    height: {{ options.height }}px;
+    overflow: hidden;
+}
+
+.hero-slider .swiper-container {
+    width: 100%;
+    height: 100%;
+}
+
+.hero-slide {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: {{ options.height }}px;
+}
+
+.slide-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.slide-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.slide-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 100%);
+    z-index: 2;
+}
+
+.slide-content {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    padding: 2rem 0;
+}
+
+.slide-text-wrapper {
+    max-width: 600px;
+    padding: 2rem;
+}
+
+.slide-text-wrapper.text-right {
+    margin-right: 0;
+    margin-left: auto;
+    text-align: right;
+}
+
+.slide-text-wrapper.text-left {
+    margin-left: 0;
+    margin-right: auto;
+    text-align: left;
+}
+
+.slide-text-wrapper.text-center {
+    margin: 0 auto;
+    text-align: center;
+}
+
+.slide-subtitle {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.slide-title {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+}
+
+.slide-description {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    opacity: 0.95;
+}
+
+.slide-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    background: linear-gradient(45deg, #3498db, #2980b9);
+    color: white;
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+.slide-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+    background: linear-gradient(45deg, #2980b9, #3498db);
+}
+
+.hero-pagination-bullet {
+    width: 12px;
+    height: 12px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.hero-pagination-bullet-active {
+    background: #3498db;
+    transform: scale(1.2);
+}
+
+.swiper-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: rgba(255,255,255,0.2);
+    z-index: 4;
+}
+
+.progress-fill {
+    display: block;
+    height: 100%;
+    background: #3498db;
+    width: 0%;
+}
+
+.scroll-indicator {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    color: rgba(255,255,255,0.8);
+    z-index: 4;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+    40% { transform: translateX(-50%) translateY(-10px); }
+    60% { transform: translateX(-50%) translateY(-5px); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-slider {
+        height: 400px;
+    }
+    
+    .slide-title {
+        font-size: 2rem;
+    }
+    
+    .slide-description {
+        font-size: 1rem;
+    }
+    
+    .slide-text-wrapper {
+        padding: 1rem;
+        max-width: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-slider {
+        height: 350px;
+    }
+    
+    .slide-title {
+        font-size: 1.5rem;
+    }
+}
+</style>

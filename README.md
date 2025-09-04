@@ -1,678 +1,355 @@
-```markdown
-# مستندات فنی کتابخانه WP Helpers
+# WordPress Helpers Package 🚀
 
-## 1. نگاه کلی به سیستم
+یک کتابخانه قدرتمند و مدرن برای توسعه‌دهندگان WordPress که توسعه قالب‌ها و افزونه‌ها را سرعت می‌بخشد.
 
-### هدف
-کتابخانه WP Helpers یک مجموعه ابزار و کلاس‌های کمکی برای توسعه‌دهندگان وردپرس است که امکانات گسترده‌ای را برای پیاده‌سازی سریع‌تر و کارآمدتر قابلیت‌های مختلف در پروژه‌های وردپرسی فراهم می‌کند. این کتابخانه با هدف ساده‌سازی توسعه افزونه‌ها و قالب‌های وردپرس طراحی شده است.
+[![License](https://img.shields.io/github/license/jamal13647850/wp-helpers)](LICENSE)
+[![PHP Version](https://img.shields.io/badge/PHP-%3E%3D7.4-blue)](composer.json)
+[![WordPress Version](https://img.shields.io/badge/WordPress-%3E%3D5.0-blue)](composer.json)
+[![Latest Release](https://img.shields.io/github/v/release/jamal13647850/wp-helpers)](https://github.com/jamal13647850/wp-helpers/releases)
 
-### معماری
-کتابخانه WP Helpers با معماری شیءگرا (OOP) طراحی شده و از الگوهای طراحی مدرن مانند Facade، Singleton، و Strategy بهره می‌برد. این کتابخانه در فضای نام `jamal13647850\wphelpers` قرار دارد و شامل چندین زیرسیستم اصلی است:
+## 🌟 ویژگی‌ها
 
-1. **سیستم کش (Cache)**: مدیریت کش با پشتیبانی از چندین درایور مختلف
-2. **سیستم نمایش (View)**: موتور قالب‌سازی مبتنی بر Twig
-3. **سیستم اعتبارسنجی (Validation)**: اعتبارسنجی فرم‌ها و درخواست‌ها
-4. **مدیریت HTMX**: پشتیبانی از تعاملات AJAX مدرن با استفاده از HTMX
-5. **ابزارهای کاربردی**: مجموعه‌ای از کلاس‌های کمکی برای کار با ووکامرس، نظرات، امتیازدهی و غیره
-6. **سیستم تنظیمات (Config)**: مدیریت جامع تنظیمات پروژه و ارتباط با wp_options و ACF
+- 🎨 **سیستم Template پیشرفته** - موتور Twig برای قالب‌سازی مدرن
+- ⚡ **سیستم کش چندلایه** - Redis، Object Cache، Transient
+- 🌐 **پشتیبانی چندزبانه** - مدیریت زبان‌ها و ترجمه
+- 📱 **HTMX Integration** - تعاملات AJAX مدرن و سریع
+- 🎯 **Menu Components** - 7 نوع منوی آماده و قابل سفارشی‌سازی
+- 🎪 **Slider Components** - اسلایدرهای پیشرفته با Swiper.js
+- 🛡️ **امنیت پیشرفته** - CSRF، Rate Limiting، Validation
+- 🔧 **ACF Integration** - مدیریت تنظیمات قالب
+- 🎮 **Alpine.js Components** - رابط‌های کاربری تعاملی
 
-### جایگاه کد در سیستم
-این کتابخانه به عنوان یک لایه میانی بین هسته وردپرس و کد اختصاصی پروژه عمل می‌کند. توسعه‌دهندگان می‌توانند با استفاده از این کتابخانه، قابلیت‌های پیشرفته را بدون نیاز به نوشتن کد تکراری پیاده‌سازی کنند.
+## 🚀 شروع سریع
 
-## 2. جزئیات فنی
+### نصب
 
-### سیستم کش (Cache)
+```bash
+composer require jamal13647850/wp-helpers
+```
 
-#### CacheInterface
-رابط اصلی برای تمام درایورهای کش که متدهای استاندارد برای ذخیره، بازیابی و مدیریت داده‌های کش را تعریف می‌کند.
+### راه‌اندازی پایه
 
 ```php
-interface CacheInterface {
-    public function set(string $key, $value, ?int $expiration = null): bool;
-    public function get(string $key, $default = null);
-    public function delete(string $key): bool;
-    public function exists(string $key): bool;
-    public function flush(): bool;
+<?php
+// functions.php
+require_once get_template_directory() . '/vendor/autoload.php';
+
+use jamal13647850\wphelpers\ServiceProvider;
+ServiceProvider::boot();
+
+// Helper function برای View
+function get_theme_view() {
+    static $view = null;
+    if ($view === null) {
+        $view = new \jamal13647850\wphelpers\Views\View();
+        $view->addPath(get_template_directory() . '/templates', 'theme');
+    }
+    return $view;
 }
 ```
 
-#### CacheManager
-کلاس Facade برای سیستم کش که امکان استفاده از درایورهای مختلف را فراهم می‌کند.
+### استفاده سریع
 
-**پارامترها**:
-- `$driver_type`: نوع درایور کش ('transient', 'object', 'file')
-- `$prefix`: پیشوند کلیدهای کش
-- `$default_expiration`: زمان انقضای پیش‌فرض به ثانیه
-
-**متدهای اصلی**:
-- `set()`: ذخیره داده در کش
-- `get()`: بازیابی داده از کش
-- `delete()`: حذف داده از کش
-- `remember()`: بازیابی داده از کش یا ذخیره نتیجه تابع callback
-
-#### درایورهای کش
-سه درایور اصلی برای سیستم کش وجود دارد:
-
-1. **TransientCacheDriver**: استفاده از سیستم transient وردپرس
-2. **ObjectCacheDriver**: استفاده از سیستم object cache وردپرس
-3. **FileCacheDriver**: ذخیره کش در فایل (برای نمایش؛ برای محیط تولید توصیه نمی‌شود)
-
-### سیستم نمایش (View)
-
-#### ViewInterface
-رابط اصلی برای سیستم نمایش که متدهای لازم برای رندر قالب‌ها را تعریف می‌کند.
-
-#### View
-پیاده‌سازی سیستم نمایش با استفاده از موتور قالب‌سازی Twig.
-
-**متدهای اصلی**:
-- `render()`: رندر یک قالب و برگرداندن نتیجه به صورت رشته
-- `display()`: رندر یک قالب و نمایش مستقیم آن
-- `render_with_exit()`: رندر یک قالب و خروج از اجرا
-
-### سیستم اعتبارسنجی (Validation)
-
-#### HTMX_Validator
-کلاس اعتبارسنجی داده‌ها با پشتیبانی از قوانین مختلف اعتبارسنجی.
-
-**متدهای اصلی**:
-- `validate()`: اعتبارسنجی داده‌ها بر اساس قوانین تعریف شده
-- `getErrors()`: دریافت خطاهای اعتبارسنجی
-- `renderErrors()`: رندر خطاهای اعتبارسنجی
-
-**قوانین اعتبارسنجی**:
-- required: فیلد اجباری
-- email: آدرس ایمیل معتبر
-- url: آدرس URL معتبر
-- numeric: مقدار عددی
-- min/max: حداقل/حداکثر طول
-- و بسیاری دیگر...
-
-#### CommentValidationTrait
-Trait برای اعتبارسنجی نظرات که شامل متدهای مشترک برای اعتبارسنجی نظرات است.
-
-**متدهای اصلی**:
-- `verifyNonce()`: بررسی اعتبار nonce
-- `verifyCaptcha()`: بررسی اعتبار کپچا
-- `verifyHoneypot()`: بررسی فیلد honeypot
-- `applyRateLimiting()`: اعمال محدودیت تعداد درخواست
-
-### مدیریت HTMX
-
-#### HTMX_Controller
-کلاس پایه برای کنترلرهای HTMX که امکان ایجاد کنترلرهای سفارشی را فراهم می‌کند.
-
-**متدهای اصلی**:
-- `registerRoutes()`: ثبت مسیرهای HTMX
-- `handleRequest()`: پردازش درخواست‌های HTMX
-- `render()`: رندر قالب‌ها
-- `triggerEvent()`: ارسال رویداد به سمت کلاینت
-
-#### HTMX_Handler
-کلاس مدیریت درخواست‌های HTMX با پشتیبانی از middleware.
-
-**متدهای اصلی**:
-- `registerEndpoint()`: ثبت یک نقطه پایانی HTMX
-- `registerMiddleware()`: ثبت یک middleware
-- `handleEndpoint()`: پردازش درخواست‌های HTMX
-- `registerAssets()`: ثبت فایل‌های JavaScript HTMX
-
-### مدیریت تنظیمات سراسری (Config)
-
-#### Config
-کلاس مدیریت تنظیمات پروژه و پشتیبانی کامل از تنظیمات چندلایه، wp_options و ACF.
-
-**متدهای اصلی:**
-```php
-Config::init($configPath = null);                   // مقداردهی اولیه با مقادیر پیش‌فرض یا فایل سفارشی
-Config::get($key, $default = null);                 // دریافت مقدار براساس dot notation
-Config::set($key, $value);                          // تنظیم مقدار جدید در مسیر دلخواه
-Config::unset($key);                                // حذف مقدار (هر عمق دلخواه)
-Config::saveToOption($optionName, $key = null);     // ذخیره کل یا بخشی از config در wp_options
-Config::loadFromOption($optionName, $key = null);   // بارگذاری config از wp_options به حافظه
-Config::getACFOption($key, $default = null);        // خواندن گزینه‌های Option Page ساخته‌ شده با ACF یا wp_options
+```twig
+{# header.twig #}
+<!DOCTYPE html>
+<html {{ language_attributes() }} dir="rtl">
+<head>{{ wp_head() }}</head>
+<body {{ body_class() }}>
+    <header>
+        {{ menu('desktop', 'primary')|raw }}
+    </header>
 ```
 
-- پشتیبانی کامل از providerهای متعدد SMS و multiple pattern برای هر provider در ساختار آرایه‌ای
-- مناسب برای بارگذاری، ذخیره و حذف هر نوع پیکربندی مرتبط با پروژه/افزونه/قالب
-- ارتباط یکپارچه با تنظیمات ACF option pages و wp_options
-- ویژه محیط‌های پیشرفته با نیاز به پایداری، امنیت و مقیاس‌پذیری مدیریت config
+## 📚 مستندات
 
-### ابزارهای کاربردی
+### راهنماهای کامل
+- [📖 راهنمای کامل](COMPREHENSIVE_GUIDE.md) - مستندات جامع و تکمیلی
+- [⚡ شروع سریع](QUICK_START.md) - راه‌اندازی در کمترین زمان ممکن  
+- [💻 مثال‌های عملی](examples/) - کدهای آماده و قابل استفاده
 
-#### CaptchaManager
-مدیریت کپچا برای فرم‌ها.
+### ویژگی‌های اصلی
 
-**متدهای اصلی**:
-- `generate_captcha()`: تولید کپچا جدید
-- `verify_captcha()`: بررسی اعتبار پاسخ کپچا
-- `render_captcha()`: رندر HTML کپچا
-
-#### BlogCommentsController
-مدیریت نظرات وبلاگ.
-
-**متدهای اصلی**:
-- `prepareCommentsData()`: آماده‌سازی داده‌های نظرات
-- `submitComment()`: ثبت نظر جدید
-- `filterComments()`: فیلتر کردن نظرات
-
-#### BlogRatingController
-مدیریت امتیازدهی به مطالب وبلاگ.
-
-**متدهای اصلی**:
-- `handle_submit_rating()`: پردازش ثبت امتیاز
-- `calculateRating()`: محاسبه میانگین امتیازات
-- `hasUserRated()`: بررسی اینکه آیا کاربر قبلاً امتیاز داده است یا خیر
-
-#### CartManager
-مدیریت سبد خرید ووکامرس.
-
-**متدهای اصلی**:
-- `handle_add_to_cart_ajax()`: پردازش افزودن محصول به سبد خرید با AJAX
-- `handle_add_to_cart_single_ajax()`: پردازش افزودن محصول تکی به سبد خرید با AJAX
-
-#### AlpineNavWalker
-کلاس سفارشی برای ایجاد منوهای پیشرفته با Alpine.js.
-
-**متدهای اصلی**:
-- `start_el()`: شروع یک آیتم منو
-- `end_el()`: پایان یک آیتم منو
-- `start_lvl()`: شروع یک سطح منو
-- `end_lvl()`: پایان یک سطح منو
-
-## 3. رابط برنامه‌نویسی (API)
-
-### سیستم کش
-
+#### 🎨 سیستم Template (Twig)
 ```php
-$cache = new CacheManager('transient', 'my_prefix_', 3600);
-$cache->set('key', $value, 3600);
-$value = $cache->get('key', $default);
-$cache->delete('key');
-$value = $cache->remember('key', function() {
-    return expensive_operation();
-}, 3600);
+$view = get_theme_view();
+echo $view->render('page.twig', ['title' => 'عنوان صفحه']);
 ```
 
-### سیستم نمایش
-
+#### ⚡ کش پیشرفته
 ```php
-$view = new View();
-$html = $view->render('template.twig', ['key' => 'value']);
-$view->display('template.twig', ['key' => 'value']);
-$view->render_with_exit('template.twig', ['key' => 'value'], 200);
+use jamal13647850\wphelpers\Cache\CacheManager;
+$cache = new CacheManager('object', 'myprefix_', 3600);
+$data = $cache->remember('expensive_query', fn() => $wpdb->get_results($sql), 1800);
 ```
 
-### سیستم اعتبارسنجی
-
+#### 🌐 چندزبانگی
 ```php
-$validator = new HTMX_Validator();
-$rules = [
-    'name' => 'required|min:3',
-    'email' => 'required|email',
-    'age' => 'numeric|min:18'
-];
-if ($validator->validate($_POST, $rules)) {
-    $validated_data = $validator->getValidatedData();
-} else {
-    $errors = $validator->getErrors();
-}
+use jamal13647850\wphelpers\Language\LanguageManager;
+$lang = LanguageManager::getInstance();
+echo $lang->trans('welcome'); // خوش آمدید
 ```
 
-### سیستم تنظیمات (Config)
-
+#### 📱 HTMX Controllers
 ```php
-use jamal13647850\wphelpers\Config;
-Config::init();
-Config::set('sms.providers.faraz.username', 'abc');
-$username = Config::get('sms.providers.faraz.username');
-Config::unset('sms.providers.faraz.patterns.login');
-Config::saveToOption('myplugin_config');
-Config::loadFromOption('myplugin_config');
-$email = Config::getACFOption('contact_email', 'default@example.com');
-```
-
-### مدیریت HTMX
-
-```php
-class MyController extends HTMX_Controller {
-    protected function getNamespace(): string { return 'my_controller'; }
+class MyController extends \jamal13647850\wphelpers\Controllers\HTMX_Controller {
     protected function registerRoutes(): void {
-        $this->addRoute('load_items', [
-            'handler' => 'loadItems',
-            'public' => true,
-            'cache' => true
-        ]);
+        $this->addRoute('submit_form', 'handleForm', ['methods' => ['POST']]);
     }
-    public function loadItems() {
-        $items = get_posts(['post_type' => 'item', 'posts_per_page' => 10]);
-        $this->render('items/list.twig', ['items' => $items]);
+    
+    protected function handleForm(): void {
+        $this->render('success.twig', ['message' => 'موفق!'], '#form-result');
     }
 }
-$controller = new MyController();
-$url = $controller->getRouteUrl('load_items');
+new MyController();
 ```
 
-### ابزارهای کاربردی
-
+#### 🎯 Menu Components
 ```php
-$captcha = new CaptchaManager();
-$captcha_html = $captcha->render_captcha();
-$is_valid = $captcha->verify_captcha($_POST['captcha_answer'], $_POST['captcha_nonce'], $_POST['captcha_transient_key']);
-
-$comments_controller = new BlogCommentsController($view, 'comments/form.twig', $post_id, $captcha);
-$comments_data = $comments_controller->prepareCommentsData();
-$form_html = $comments_controller->render_comment_form();
-
-$cart_manager = new CartManager();
-add_action('wp_ajax_add_to_cart_ajax', [$cart_manager, 'handle_add_to_cart_ajax']);
-add_action('wp_ajax_nopriv_add_to_cart_ajax', [$cart_manager, 'handle_add_to_cart_ajax']);
-```
-
-## 4. مثال‌های کاربردی
-
-### مثال ۱: مدیریت کش نتایج پرس‌وجو
-
-```php
-use jamal13647850\wphelpers\CacheManager;
-$cache = new CacheManager('transient', 'query_cache_', 3600);
-function get_cached_recent_posts($count = 5, $category = null) {
-    global $cache;
-    $cache_key = "recent_posts_{$count}_{$category}";
-    return $cache->remember($cache_key, function() use ($count, $category) {
-        $args = ['posts_per_page' => $count, 'post_status' => 'publish'];
-        if ($category) $args['category_name'] = $category;
-        $query = new WP_Query($args);
-        $posts = [];
-        if ($query->have_posts()) {
-            while ($query->have_posts()) {
-                $query->the_post();
-                $posts[] = [
-                    'id' => get_the_ID(),
-                    'title' => get_the_title(),
-                    'excerpt' => get_the_excerpt(),
-                    'link' => get_permalink(),
-                    'thumbnail' => get_the_post_thumbnail_url(),
-                    'date' => get_the_date()
-                ];
-            }
-            wp_reset_postdata();
-        }
-        return $posts;
-    }, 3600);
-}
-$recent_posts = get_cached_recent_posts(5, 'news');
-```
-
-### مثال ۲: فرم نظرات با اعتبارسنجی و کپچا
-
-```php
-use jamal13647850\wphelpers\View;
-use jamal13647850\wphelpers\CaptchaManager;
-use jamal13647850\wphelpers\BlogCommentsController;
-$view = new View();
-$captcha = new CaptchaManager($view);
-$post_id = get_the_ID();
-$comments_controller = new BlogCommentsController(
-    $view,
-    'components/blog/comment-form.twig',
-    $post_id,
-    $captcha
-);
-add_action('wp_ajax_submit_blog_comment', [$comments_controller, 'handle_submit_comment']);
-add_action('wp_ajax_nopriv_submit_blog_comment', [$comments_controller, 'handle_submit_comment']);
-function render_comments_section() {
-    global $comments_controller, $view;
-    $comments_data = $comments_controller->prepareCommentsData();
-    $form_html = $comments_controller->render_comment_form();
-    echo $view->render('components/blog/comments-section.twig', [
-        'comments' => $comments_data,
-        'form' => $form_html,
-        'post_id' => get_the_ID()
-    ]);
-}
-```
-
-### مثال ۳: کنترلر HTMX برای بارگذاری محصولات ووکامرس
-
-```php
-use jamal13647850\wphelpers\HTMX_Controller;
-class ProductsController extends HTMX_Controller {
-    protected function getNamespace(): string { return 'products'; }
-    protected function registerRoutes(): void {
-        $this->addRoute('load_products', [
-            'handler' => 'loadProducts',
-            'public' => true,
-            'cache' => true,
-            'cache_time' => 1800
-        ]);
-        $this->addRoute('filter_products', [
-            'handler' => 'filterProducts',
-            'public' => true
-        ]);
-        $this->addRoute('quick_view', [
-            'handler' => 'quickView',
-            'public' => true
-        ]);
-    }
-    public function loadProducts() {
-        $page = $this->getSanitizedParam('page', 1, 'int');
-        $per_page = $this->getSanitizedParam('per_page', 12, 'int');
-        $args = [
-            'post_type' => 'product',
-            'posts_per_page' => $per_page,
-            'paged' => $page,
-            'post_status' => 'publish'
-        ];
-        $products = wc_get_products($args);
-        $this->render('products/list.twig', [
-            'products' => $products,
-            'page' => $page,
-            'per_page' => $per_page
-        ]);
-    }
-    public function filterProducts() {
-        $category = $this->getSanitizedParam('category');
-        $min_price = $this->getSanitizedParam('min_price', 0, 'int');
-        $max_price = $this->getSanitizedParam('max_price', 0, 'int');
-        $orderby = $this->getSanitizedParam('orderby', 'date');
-        $args = [
-            'post_type' => 'product',
-            'posts_per_page' => 12,
-            'post_status' => 'publish'
-        ];
-        if ($category) {
-            $args['tax_query'][] = [
-                'taxonomy' => 'product_cat',
-                'field' => 'slug',
-                'terms' => $category
-            ];
-        }
-        if ($min_price > 0 || $max_price > 0) {
-            $args['meta_query'][] = [
-                'key' => '_price',
-                'value' => [$min_price, $max_price > 0 ? $max_price : 999999],
-                'compare' => 'BETWEEN',
-                'type' => 'NUMERIC'
-            ];
-        }
-        switch ($orderby) {
-            case 'price-asc':
-                $args['orderby'] = 'meta_value_num';
-                $args['meta_key'] = '_price';
-                $args['order'] = 'ASC';
-                break;
-            case 'price-desc':
-                $args['orderby'] = 'meta_value_num';
-                $args['meta_key'] = '_price';
-                $args['order'] = 'DESC';
-                break;
-            case 'popularity':
-                $args['orderby'] = 'meta_value_num';
-                $args['meta_key'] = 'total_sales';
-                $args['order'] = 'DESC';
-                break;
-            case 'date':
-            default:
-                $args['orderby'] = 'date';
-                $args['order'] = 'DESC';
-        }
-        $products = wc_get_products($args);
-        $this->render('products/filtered-list.twig', [
-            'products' => $products,
-            'filters' => [
-                'category' => $category,
-                'min_price' => $min_price,
-                'max_price' => $max_price,
-                'orderby' => $orderby
-            ]
-        ]);
-    }
-    public function quickView() {
-        $product_id = $this->getSanitizedParam('product_id', 0, 'int');
-        if (!$product_id) {
-            $this->sendError('شناسه محصول نامعتبر است.');
-            return;
-        }
-        $product = wc_get_product($product_id);
-        if (!$product) {
-            $this->sendError('محصول یافت نشد.');
-            return;
-        }
-        $this->render('products/quick-view.twig', [
-            'product' => $product
-        ]);
-    }
-}
-$products_controller = new ProductsController();
-```
-
-## 5. وابستگی‌ها و ارتباطات
-
-### وابستگی‌های خارجی
-- **وردپرس**: نسخه 5.0 یا بالاتر
-- **PHP**: نسخه 7.4 یا بالاتر
-- **Twig**: برای موتور قالب‌سازی
-- **HTMX**: برای تعاملات AJAX مدرن
-- **Alpine.js**: برای منوهای پیشرفته و تعاملات سمت کاربر
-
-### ارتباطات داخلی
-
-- **CacheManager** از **CacheInterface** و درایورهای مختلف کش استفاده می‌کند.
-- **View** از **ViewInterface** پیروی می‌کند و برای رندر قالب‌ها استفاده می‌شود.
-- **BlogCommentsController** از **CommentValidationTrait** و **CaptchaManager** استفاده می‌کند.
-- **HTMX_Controller** و **HTMX_Handler** از **View** و **HTMX_Validator** استفاده می‌کنند.
-- **Config** برای مدیریت تنظیمات سراسری، ذخیره دائم، حذف و یکپارچه‌سازی با wp_options و ACF استفاده می‌شود.
-
-### ساختار فایل‌ها
-```
-src/
-  Cache/                    # سیستم کش
-    CacheInterface.php
-    CacheManager.php
-    FileCacheDriver.php
-    ObjectCacheDriver.php
-    TransientCache.php
-  AlpineNavWalker.php
-  BlogCommentsController.php
-  BlogRatingController.php
-  CaptchaManager.php
-  CartManager.php
-  Category.php
-  CommentValidationTrait.php
-  Config.php
-  CPTCategory.php
-  Helper.php
-  HTMX_Controller.php
-  HTMX_Handler.php
-  HTMX_Validator.php
-  jdf.php
-  ProductCompare.php
-  ProductReviewsController.php
-  QuickViewManager.php
-  SMSForgotPasswordController.php
-  SMSLoginController.php
-  SMSRegisterController.php
-  TwigHelper.php
-  TwigHelperInterface.php
-  UserMigration.php
-  UserProfileManager.php
-  View.php
-  ViewInterface.php
-  WishlistManager.php
-  WooCommerce.php
-  WordPressTwigExtension.php
-```
-
-## 6. محدودیت‌ها و نکات مهم
-
-### محدودیت‌ها
-1. **درایور FileCacheDriver**: برای محیط توسعه مناسب است و برای محیط تولید توصیه نمی‌شود.
-2. **وابستگی به وردپرس**: این کتابخانه به طور خاص برای وردپرس طراحی شده و خارج از آن قابل استفاده نیست.
-3. **سازگاری با PHP**: نیاز به PHP 7.4 یا بالاتر دارد.
-4. **عملکرد کش**: در صورت استفاده نادرست از سیستم کش، ممکن است عملکرد سایت کاهش یابد.
-
-## 7. سیستم تنظیمات قالب با ACF (Theme Settings ACF)
-
-### معرفی
-این کلاس امکان تعریف و نمایش صفحات تنظیمات قالب و زیرمنوهای آن را به آسانی و بر اساس یک فایل config مرکزی برای شما فراهم می‌کند. قابلیت ویژه نسخه جدید:
-- بارگذاری و مدیریت منعطف و داینامیک فیلدها از طریق فایل config (بدون نیاز به تغییر کد)
-- تعریف سطح دسترسی برای هر صفحه یا حتی هر فیلد به سادگی در config
-- سازگار با نصب مستقیم در قالب یا به عنوان پکیج کامپوزری (Composer Package)
-- سازگاری با وردپرس فارسی (یا انگلیسی) و معماری استاندارد namespace
-
-### ساختار و راه‌اندازی
-
-#### **نصب**
-- اگر پروژه شما کامپوزری است:
-    ```
-    composer require jamal13647850/wphelpers
-    ```
-- یا افزودن دستی پوشه به پروژه و لود کردن آن از طریق autoload یا require
-
-#### **نمونه راه‌اندازی در قالب:**
-```php
-// در functions.php یا پلاگین وردپرسی
-add_action('after_setup_theme', function() {
-    $settings = new \jamal13647850\wphelpers\Utilities\Theme_Settings_ACF();
-    // اگر می‌خواهید config خارج از قالب باشد:
-    $settings->setConfigPath(get_stylesheet_directory().'/my-config/theme_settings_definitions.php');
-});
-```
-
-#### **ساختار فایل config**
-مثال یک گروه (درون config/theme_settings_definitions.php):
-```php
-return [
-    'general' => [
-        'menu_slug'   => 'theme-settings-general-settings',
-        'menu_order'  => 0,
-        'title'       => __('تنظیمات عمومی', 'your-textdomain'),
-        'capability'  => 'manage_options', // سطح دسترسی این صفحه
-        'fields' => [
-            [
-                'type' => 'text',
-                'label' => 'متن دلخواه',
-                'name'  => 'my_option',
-                // ...
-                'capability' => 'edit_theme_options', // فقط کاربران خاص این فیلد را خواهند دید!
-            ],
-            // ...
-        ]
-    ],
-    // سایر گروه‌ها
-];
-```
-
-### سفارشی‌سازی سطح دسترسی برای صفحه/زیرمنو
-
-در هر آرایه گرو‌ه (صفحه تنظیمات) کلید `capability` را ست کنید:
-- برای پنل فقط مدیر: `'capability' => 'manage_options'`
-- فقط ادیتور: `'capability'=>'edit_pages'`
-- برای کاربر سفارشی: `'capability'=>'your_custom_capability'`
-
-در هر فیلد جدا نیز می‌توانید `'capability' => ...` بدهید تا همان فیلد بسته به نقش نمایش داده شود.
-
-### حذف فیلد برای نقش کاربر
-
-کافیست همانطور که بالا گفته شد، در هر فیلد `capability` یا `visible_for_roles` مشخص کنید. کلاس به صورت خودکار (در prepareFields) این فیلد را برای کاربران فاقد این حق نمایش نخواهد داد.
-
-**مثال:**
-```php
-[
-    'type' => 'text',
-    'label' => 'کد محرمانه',
-    'name'  => 'admin_code',
-    'capability' => 'manage_options',
-],
-[
-    'type' => 'text',
-    'label' => 'فقط برای نویسنده',
-    'name'  => 'editor_code',
-    'visible_for_roles' => ['editor']
-],
-```
-
-### انتقال منو به بخش "نمایش › تنظیمات قالب"
-
-اگر می‌خواهید صفحه تنظیمات در منوی "نمایش" وردپرس درج شود:
-```php
-acf_add_options_page([
-    'page_title'  => __('Theme Settings', 'your-textdomain'),
-    'menu_title'  => __('Theme Settings', 'your-textdomain'),
-    'menu_slug'   => 'theme-settings',
-    'capability'  => 'manage_options',
-    'parent_slug' => 'themes.php', // اضافه کنید
-    'redirect'    => false,
-    'icon_url'    => 'dashicons-admin-customizer',
-    'position'    => 60,
+// 7 نوع منوی آماده
+echo MenuManager::render('overlay-mobile', 'primary', [
+    'accordion_mode' => 'independent',
+    'enable_icons' => true
 ]);
 ```
-در کلاس Theme_Settings_ACF همین مقدار را در main یا زیرمنوها استفاده کنید.
 
-### دریافت گزینه‌ها در نمای وبسایت
-
-برای دریافت هر گزینه در قالب:
+#### 🎪 Slider Components
 ```php
-function theme_option($field, $group = 'general') {
-    $prefix = [
-        // ... همان prefix های داخل کلاس ...
-    ];
-    $fieldname = ($prefix[$group] ?? '') . $field;
-    return function_exists('get_field') ? get_field($fieldname, 'option') : null;
+$slides = [
+    ['image' => 'slide1.jpg', 'title' => 'عنوان', 'content' => 'محتوا']
+];
+echo SliderManager::render('wide-auto', $slides, ['interval' => 5000]);
+```
+
+## 💡 مثال‌های کاربردی
+
+### فرم تماس با HTMX و Validation
+
+```php
+class ContactController extends \jamal13647850\wphelpers\Controllers\HTMX_Controller {
+    protected function registerRoutes(): void {
+        $this->addRoute('contact', 'handleContact', [
+            'methods' => ['POST'],
+            'middlewares' => ['throttle:5,300']
+        ]);
+    }
+    
+    protected function handleContact(): void {
+        $validator = new \jamal13647850\wphelpers\Utilities\HTMX_Validator($this->view);
+        
+        $result = $validator->validate($_POST, [
+            'name' => 'required|min:2',
+            'email' => 'required|email',
+            'message' => 'required|min:10'
+        ]);
+        
+        if (!$result['isValid']) {
+            $validator->renderErrors($result['errors'], '#errors');
+            return;
+        }
+        
+        wp_mail(get_option('admin_email'), 'تماس جدید', $_POST['message']);
+        $this->render('success.twig', ['message' => 'پیام ارسال شد'], '#form');
+    }
 }
 ```
 
-### چندزبانه و ترجمه
+```html
+<form hx-post="<?= wp_ajax_url() ?>?action=htmx_contact_contact" hx-target="#form">
+    <div id="errors"></div>
+    <input name="name" placeholder="نام" required>
+    <input name="email" type="email" placeholder="ایمیل" required>
+    <textarea name="message" placeholder="پیام" required></textarea>
+    <button type="submit">ارسال</button>
+    <?= wp_nonce_field('contact_nonce') ?>
+</form>
+```
 
-در فایل config همه labelها و instructions باید با تابع `__()` و دامین مناسب وارد شوند تا WPML/Polylang آماده ترجمه باشد.
+## 🎯 ویژگی‌های پیشرفته
 
-### وابستگی‌ها
+### سیستم کش چندلایه
+- **Redis Cache**: کارایی بالا برای سایت‌های پرترافیک
+- **Object Cache**: کش داخلی WordPress
+- **Transient Cache**: کش موقت با TTL
+- **Auto-Fallback**: بازگشت خودکار به روش‌های جایگزین
 
-- **ACF Pro** باید فعال باشد (در صورت نبود، پیام خطای مناسب برای مدیر سایت نمایش داده می‌شود).
-- حداقل وردپرس ۵ و PHP ۷.۴.
-- config theme_settings_definitions.php وجود داشته باشد.
+### امنیت پیشرفته
+- **CSRF Protection**: محافظت در برابر حملات CSRF
+- **Rate Limiting**: محدودیت تعداد درخواست
+- **Input Validation**: اعتبارسنجی کامل ورودی‌ها
+- **XSS Prevention**: جلوگیری از حملات XSS
+- **SQL Injection Protection**: محافظت در برابر SQL Injection
 
-### نکات پیشرفته
+### بهینه‌سازی عملکرد
+- **Lazy Loading**: بارگذاری به‌موقع اسکریپت‌ها
+- **Asset Optimization**: بهینه‌سازی خودکار CSS/JS
+- **Database Query Caching**: کش کوئری‌های پایگاه داده
+- **Image Optimization**: بهینه‌سازی تصاویر
 
-- می‌توانید در هر فیلد آرگومان‌های threshold دیتاتایپ یا custom property قرار دهید و prepareFields را بسته به نیاز تغییر دهید.
-- کلاس باز است و با فیلترهای وردپرس (مانند yourtheme_theme_settings_acf_groups) به آسانی قابل توسعه توسط افزونه یا قالب child می‌باشد.
+## 🛠️ ابزارهای توسعه
+
+### ACF Pro Integration
+```php
+use jamal13647850\wphelpers\Utilities\Theme_Settings_ACF;
+
+$settings = new Theme_Settings_ACF();
+$logo = $settings->getOption('logo', 'header');
+$show_slider = (bool) $settings->getOption('slider_show', 'homepage');
+```
+
+### کپچا و امنیت
+```php
+use jamal13647850\wphelpers\Managers\CaptchaManager;
+$captcha = new CaptchaManager();
+$data = $captcha->generate_captcha('medium');
+$is_valid = $captcha->verify_captcha($_POST['answer'], $_POST['token']);
+```
+
+### لیست علاقه‌مندی‌ها
+```php
+use jamal13647850\wphelpers\Managers\WishlistManager;
+$wishlist = new WishlistManager();
+$wishlist->toggle_wishlist($product_id, $user_id);
+```
+
+## 📋 پیش‌نیازها
+
+- PHP 7.4 یا بالاتر
+- WordPress 5.0 یا بالاتر
+- Composer
+- ACF Pro (برای تنظیمات قالب)
+
+## 🏗️ معماری
+
+```
+src/
+├── Cache/                 # سیستم کش چندلایه
+├── Components/           # کامپوننت‌های آماده
+├── Controllers/          # کنترلرهای HTMX
+├── Language/            # سیستم چندزبانه
+├── Managers/            # مدیران مختلف (Menu، Slider، etc.)
+├── Utilities/           # ابزارهای کمکی
+└── Views/               # سیستم View و Twig
+```
+
+### الگوهای طراحی استفاده شده
+- **Facade Pattern**: ساده‌سازی رابط‌های پیچیده
+- **Singleton Pattern**: مدیریت instances منحصربه‌فرد
+- **Factory Pattern**: ایجاد اشیاء بر اساس نوع
+- **Observer Pattern**: مدیریت رویدادها
+- **Strategy Pattern**: انتخاب الگوریتم در زمان اجرا
+
+## 📱 سازگاری
+
+### Frameworks و کتابخانه‌ها
+- ✅ **Twig 3.x**: موتور template مدرن
+- ✅ **HTMX 1.8+**: تعاملات AJAX بدون JavaScript
+- ✅ **Alpine.js 3.x**: JavaScript framework سبک
+- ✅ **Swiper.js 8.x**: اسلایدرهای پیشرفته
+- ✅ **TailwindCSS**: framework CSS utility-first
+
+### WordPress Plugins
+- ✅ **ACF Pro**: تنظیمات پیشرفته قالب
+- ✅ **WooCommerce**: فروشگاه آنلاین
+- ✅ **WPML/Polylang**: چندزبانگی
+- ✅ **Redis**: کش پیشرفته
+
+## 🔧 پیکربندی
+
+### تنظیمات Cache
+```php
+// wp-config.php
+define('WP_CACHE', true);
+define('WP_REDIS_HOST', '127.0.0.1');
+define('WP_REDIS_PORT', 6379);
+```
+
+### تنظیمات Theme
+```php
+// در قالب
+function theme_setup() {
+    // پشتیبانی از قابلیت‌های مدرن
+    add_theme_support('post-thumbnails');
+    add_theme_support('menus');
+    
+    // ثبت منوها
+    register_nav_menus([
+        'primary' => 'منوی اصلی',
+        'footer' => 'منوی فوتر'
+    ]);
+}
+add_action('after_setup_theme', 'theme_setup');
+```
+
+## 🐛 عیب‌یابی
+
+### فعال‌سازی Debug Mode
+```php
+// wp-config.php
+define('WP_DEBUG', true);
+define('WP_DEBUG_LOG', true);
+define('WP_DEBUG_DISPLAY', false);
+```
+
+### مشکلات رایج
+
+#### 1. خطای "Class not found"
+```bash
+# بررسی autoloader
+composer dump-autoload
+```
+
+#### 2. Template یافت نشد
+```php
+// بررسی مسیرها
+$view = get_theme_view();
+if (!$view->templateExists('my-template.twig')) {
+    wp_die('Template یافت نشد');
+}
+```
+
+#### 3. HTMX کار نمی‌کند
+```javascript
+// Console برای بررسی خطاها
+console.log('HTMX loaded:', typeof htmx !== 'undefined');
+```
+
+## 🤝 مشارکت
+
+ما از مشارکت شما استقبال می‌کنیم! لطفاً:
+
+1. 🍴 **Fork** کنید
+2. 🌿 **Branch** جدید ایجاد کنید (`feature/my-feature`)
+3. 📝 تغییرات را **Commit** کنید
+4. 📤 **Push** کنید به branch خود
+5. 🔄 **Pull Request** ایجاد کنید
+
+### استانداردهای کد
+- PSR-12 coding standards
+- PHPDoc برای همه متدها
+- Unit tests برای ویژگی‌های جدید
+- Semantic versioning
+
+## 📄 مجوز
+
+این پکیج تحت مجوز [MIT](LICENSE) منتشر شده است.
+
+## 👨‍💻 سازنده
+
+**Sayyed Jamal Ghasemi**
+- 📧 Email: [info@jamalghasemi.com](mailto:info@jamalghasemi.com)
+- 🔗 LinkedIn: [jamal1364](https://www.linkedin.com/in/jamal1364/)
+- 📸 Instagram: [@jamal13647850](https://www.instagram.com/jamal13647850)
+- 💬 Telegram: [@jamal13647850](https://t.me/jamal13647850)
+- 🌐 Website: [jamalghasemi.com](https://jamalghasemi.com)
 
 ---
 
-## خلاصه
-
-- کد مدیریت تنظیمات قالب شما کاملاً داینامیک، OOP و قابل سفارشی‌سازی برای هر سطح دسترسی و هر پروژه است.
-- افزودن یا حذف هر تنظیم فقط با تغییر config و بدون نیاز به دستکاری کد کلاس.
-- نمایش تنظیمات قالب در هر بخش از منو (مستقل، زیر نمایش، یا حتی شاخه سفارشی دیگر وردپرس) تنها با تغییر یک کلید parent_slug.
-- پشتیبانی قوی برای استارتاپ‌های حرفه‌ای و پروژه‌های بزرگ!
-
-برای مثال از فایل config یا override رفتار خاص فقط کافی است یک آرایه جدید بسازید یا با فیلتر سابق، تغییر دهید.
+<p align="center">
+  <strong>ساخته شده با ❤️ برای جامعه توسعه‌دهندگان WordPress</strong><br>
+  اگر این پکیج برای شما مفید بود، لطفاً ⭐ بدهید!
+</p>
 
 
 
-### نکات مهم
-1. **امنیت**: همیشه از توابع اعتبارسنجی و sanitize برای داده‌های ورودی استفاده کنید.
-2. **عملکرد**: برای بهبود عملکرد، از سیستم کش به درستی استفاده کنید.
-3. **سازگاری**: قبل از به‌روزرسانی کتابخانه، تغییرات را در محیط توسعه آزمایش کنید.
-4. **تنظیمات**: برای تنظیم پیکربندی کتابخانه، از کلاس Config استفاده کنید.
-5. **دیباگ**: در محیط توسعه، تنظیم `debug` را فعال کنید تا پیام‌های خطا را مشاهده کنید.
 
-### بهترین شیوه‌های استفاده
-1. **ایجاد کلاس‌های سفارشی**: به جای تغییر مستقیم کد کتابخانه، کلاس‌های سفارشی ایجاد کنید که از کلاس‌های کتابخانه ارث‌بری می‌کنند.
-2. **استفاده از سیستم کش**: برای بهبود عملکرد، از سیستم کش برای ذخیره نتایج عملیات پرهزینه استفاده کنید.
-3. **پیکربندی مناسب**: تنظیمات کتابخانه را متناسب با نیازهای پروژه خود پیکربندی کنید.
-4. **استفاده از اعتبارسنجی**: همیشه از سیستم اعتبارسنجی برای بررسی داده‌های ورودی استفاده کنید.
-5. **مستندسازی**: کد سفارشی خود را به خوبی مستند کنید و از نام‌گذاری معنادار استفاده کنید.
-6. **آزمایش**: قبل از استفاده در محیط تولید، کد خود را در محیط توسعه آزمایش کنید.
-7. **به‌روزرسانی**: کتابخانه را به‌روز نگه دارید تا از آخرین ویژگی‌ها و رفع اشکالات بهره‌مند شوید.
-8. **استفاده از HTMX**: برای ایجاد رابط کاربری پویا، از قابلیت‌های HTMX استفاده کنید.
-9. **مدیریت خطا**: همیشه خطاها را مدیریت کنید و پیام‌های خطای مناسب به کاربر نمایش دهید.
-10. **استفاده از View**: برای جداسازی منطق از نمایش، از سیستم View استفاده کنید.
-
-## نتیجه‌گیری
-
-کتابخانه WP Helpers یک مجموعه قدرتمند از ابزارها و کلاس‌های کمکی برای توسعه‌دهندگان وردپرس است که می‌تواند فرآیند توسعه را سرعت بخشیده و کیفیت کد را بهبود دهد. با استفاده از این کتابخانه، می‌توانید از نوشتن کد تکراری جلوگیری کرده و از الگوهای طراحی مدرن بهره ببرید.
-
-با درک عمیق از قابلیت‌های این کتابخانه و رعایت بهترین شیوه‌های استفاده، می‌توانید پروژه‌های وردپرسی حرفه‌ای و مقیاس‌پذیر ایجاد کنید که به راحتی قابل نگهداری و توسعه هستند.
-```
