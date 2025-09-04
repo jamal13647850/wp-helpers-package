@@ -446,7 +446,7 @@ class Theme_Settings_ACF
         if ($cached !== false && isset($cached[$field])) {
             return $cached[$field];
         }
-        $value = function_exists('get_field') ? get_field($field_name, $option_lang) : null;
+        $value = function_exists('get_field') ? get_field($field_name, 'option') : null;
 
         // Populate cache if not already cached
         if ($this->cache && $cached === false && !empty($this->groups[$group]['fields'])) {
@@ -455,7 +455,7 @@ class Theme_Settings_ACF
                 if (isset($f['name']) && $f['type'] !== 'tab') {
                     $all_prefix_name = $prefix . $f['name'];
                     $all[$f['name']] = function_exists('get_field')
-                        ? get_field($all_prefix_name, $option_lang)
+                        ? get_field($all_prefix_name, 'option')
                         : null;
                 }
             }
